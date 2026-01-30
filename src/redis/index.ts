@@ -1,2 +1,2 @@
 export { closeRedis, redis } from "./client";
-export { kv } from "./kv";
+export { KvService, kvService } from "./kv.service";

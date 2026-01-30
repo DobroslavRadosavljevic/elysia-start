@@ -9,6 +9,8 @@ A modern, batteries-included starter kit for building fast backend servers with 
 - 🗄️ **Drizzle ORM** - Type-safe PostgreSQL with migrations
 - 🔴 **Redis** - ioredis client with KV utilities
 - 🔐 **Better Auth** - Type-safe authentication with Redis session storage
+- 📧 **Resend** - Reliable email delivery with tracking
+- 🎨 **React Email** - Beautiful email templates built with JSX
 - 📋 **BullMQ** - Redis-backed job queues with Bull Board UI
 - 📚 **OpenAPI** - Auto-generated API documentation
 - 🔒 **CORS** - Cross-origin resource sharing enabled
@@ -333,6 +335,132 @@ import type { Session, User } from "../auth";
 
 ---
 
+## 📧 Email (React Email + Resend)
+
+This project uses **React Email** for building beautiful email templates and **Resend** for reliable email delivery.
+
+### Features
+
+- 🎨 **React Components** - Build emails using familiar React patterns
+- 👀 **Live Preview** - Hot-reload email development server
+- 📱 **Responsive** - Templates work across all email clients
+- 🚀 **Resend API** - Fast, reliable email delivery with tracking
+
+### Email Scripts
+
+| Command                | Description                            |
+| ---------------------- | -------------------------------------- |
+| `bun run email:dev`    | Start email preview server (port 3001) |
+| `bun run email:build`  | Build email templates for production   |
+| `bun run email:export` | Export templates to HTML               |
+
+### Development Preview
+
+Start the email development server to preview templates with hot reload:
+
+```bash
+bun run email:dev
+```
+
+Open [http://localhost:3001](http://localhost:3001) to preview your email templates.
+
+### Creating Email Templates
+
+Create templates in `src/email/templates/`:
+
+```tsx
+import {
+  Body,
+  Button,
+  Container,
+  Head,
+  Html,
+  Preview,
+  Text,
+} from "@react-email/components";
+
+interface WelcomeEmailProps {
+  name: string;
+}
+
+export const WelcomeEmail = ({ name }: WelcomeEmailProps) => (
+  <Html>
+    <Head />
+    <Body style={{ fontFamily: "sans-serif" }}>
+      <Preview>Welcome to our platform!</Preview>
+      <Container>
+        <Text>Hello {name},</Text>
+        <Text>Thanks for signing up!</Text>
+        <Button href="https://example.com/dashboard">Go to Dashboard</Button>
+      </Container>
+    </Body>
+  </Html>
+);
+
+export default WelcomeEmail;
+```
+
+### Sending Emails
+
+Use the email service with React Email templates:
+
+```typescript
+import { render } from '@react-email/components';
+import { emailService } from '../email';
+import { WelcomeEmail } from '../email/templates/welcome';
+
+// Render React component to HTML
+const html = await render(<WelcomeEmail name="John" />);
+
+// Send via Resend
+await emailService.send({
+  from: 'hello@example.com',
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  html,
+});
+
+// Or send directly with React component
+await emailService.send({
+  from: 'hello@example.com',
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  react: <WelcomeEmail name="John" />,
+});
+```
+
+### Batch Sending
+
+Send multiple emails in a single API call:
+
+```typescript
+await emailService.sendBatch([
+  {
+    from: 'hello@example.com',
+    to: 'user1@example.com',
+    subject: 'Welcome!',
+    react: <WelcomeEmail name="User 1" />,
+  },
+  {
+    from: 'hello@example.com',
+    to: 'user2@example.com',
+    subject: 'Welcome!',
+    react: <WelcomeEmail name="User 2" />,
+  },
+]);
+```
+
+### Included Templates
+
+The starter includes example templates from React Email:
+
+- `notion-magic-link.tsx` - Magic link authentication
+- `stripe-welcome.tsx` - Welcome email
+- `plaid-verify-identity.tsx` - Identity verification
+- `vercel-invite-user.tsx` - Team invitation
+
+---
+
 ## 📋 Queue Jobs (BullMQ)
 
 This project includes **BullMQ** for background job processing with **Bull Board** for monitoring.
@@ -444,26 +572,30 @@ await emailQueue.upsertJobScheduler(
 
 ## 🔐 Environment Variables
 
-Environment variables are validated at startup using [t3-env](https://github.com/t3-oss/t3-env).
+Environment variables are validated at startup using [t3-env](https://github.com/t3-oss/t3-env). **All variables are required** - the server won't start if any are missing.
 
-| Variable              | Type   | Default                        | Description                                 |
-| --------------------- | ------ | ------------------------------ | ------------------------------------------- |
-| `NODE_ENV`            | enum   | `development`                  | `development`, `production`, or `test`      |
-| `PORT`                | number | `3000`                         | Server port                                 |
-| `POSTGRES_HOST`       | string | `localhost`                    | PostgreSQL host                             |
-| `POSTGRES_PORT`       | number | `5432`                         | PostgreSQL port                             |
-| `POSTGRES_USER`       | string | `elysia`                       | PostgreSQL user                             |
-| `POSTGRES_PASSWORD`   | string | `elysia_local_pass`            | PostgreSQL password                         |
-| `POSTGRES_DB`         | string | `elysia_dev`                   | PostgreSQL database name                    |
-| `DATABASE_URL`        | string | -                              | Full PostgreSQL connection URL (optional)   |
-| `REDIS_HOST`          | string | `localhost`                    | Redis host                                  |
-| `REDIS_PORT`          | number | `6379`                         | Redis port                                  |
-| `REDIS_PASSWORD`      | string | -                              | Redis password (optional for local)         |
-| `REDIS_URL`           | string | -                              | Full Redis connection URL (optional)        |
-| `BETTER_AUTH_URL`     | string | `http://localhost:3000`        | Base URL for auth endpoints                 |
-| `BETTER_AUTH_SECRET`  | string | `development-secret-key-at...` | Auth secret key (min 32 chars)              |
-| `BULL_BOARD_USERNAME` | string | `admin`                        | Bull Board dashboard username               |
-| `BULL_BOARD_PASSWORD` | string | `admin123!`                    | Bull Board dashboard password (min 8 chars) |
+| Variable              | Type   | Description                            |
+| --------------------- | ------ | -------------------------------------- |
+| `NODE_ENV`            | enum   | `development`, `production`, or `test` |
+| `PORT`                | number | Server port                            |
+| `DATABASE_URL`        | url    | PostgreSQL connection URL              |
+| `REDIS_URL`           | url    | Redis connection URL                   |
+| `BETTER_AUTH_URL`     | url    | Base URL for auth endpoints            |
+| `BETTER_AUTH_SECRET`  | string | Auth secret key (min 32 chars)         |
+| `BULL_BOARD_USERNAME` | string | Bull Board dashboard username          |
+| `BULL_BOARD_PASSWORD` | string | Bull Board dashboard password (min 8)  |
+| `RESEND_API_KEY`      | string | Resend API key for email delivery      |
+| `RESEND_FROM_EMAIL`   | email  | Default sender email address           |
+
+### Removing Unused Features
+
+If you don't need certain features, remove both the env variable from `src/config/env.ts` and the related code:
+
+| Feature        | Env Variables   | Code to Remove                   |
+| -------------- | --------------- | -------------------------------- |
+| Authentication | `BETTER_AUTH_*` | `src/auth/`, auth plugin         |
+| Email          | `RESEND_*`      | `src/email/`, email plugin       |
+| Queue Jobs     | `BULL_BOARD_*`  | `src/queues/`, Bull Board routes |
 
 ---
 
@@ -490,6 +622,9 @@ Environment variables are validated at startup using [t3-env](https://github.com
 | `bun run docker:clean` | Stop databases and remove volumes        |
 | `bun run docker:build` | Build production Docker image            |
 | `bun run docker:prod`  | Start full production stack              |
+| `bun run email:dev`    | Start email preview server (port 3001)   |
+| `bun run email:build`  | Build email templates for production     |
+| `bun run email:export` | Export templates to HTML                 |
 | `bun run ci:enable`    | Enable GitHub Actions & Dependabot       |
 | `bun run ci:disable`   | Disable GitHub Actions & Dependabot      |
 
@@ -514,7 +649,12 @@ elysia-start/
 │   │   └── migrations/       # Generated migrations
 │   ├── redis/                # Redis layer (ioredis)
 │   │   ├── client.ts         # Redis connection
-│   │   └── kv.ts             # KV utility functions
+│   │   └── kv.service.ts     # KV service class
+│   ├── email/                # Email layer (React Email + Resend)
+│   │   ├── client.ts         # Resend client
+│   │   ├── email.service.ts  # Email service class
+│   │   ├── email.model.ts    # Zod schemas for email
+│   │   └── templates/        # React Email templates
 │   ├── queues/               # Queue layer (BullMQ)
 │   │   ├── connection.ts     # BullMQ Redis connection
 │   │   ├── board.ts          # Bull Board setup
@@ -528,7 +668,7 @@ elysia-start/
 │   ├── shared/
 │   │   ├── errors/           # Custom error classes
 │   │   ├── models/           # Shared Zod schemas
-│   │   ├── plugins/          # Reusable Elysia plugins (db, redis, auth)
+│   │   ├── plugins/          # Reusable Elysia plugins (db, redis, auth, email)
 │   │   └── utils/            # Utility functions
 │   └── types/                # Global TypeScript types
 ├── tests/

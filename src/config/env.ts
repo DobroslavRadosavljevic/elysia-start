@@ -16,26 +16,15 @@ export const env = createEnv({
   runtimeEnv: process.env,
 
   server: {
-    BETTER_AUTH_SECRET: z
-      .string()
-      .min(32)
-      .default("development-secret-key-at-least-32-chars"),
-    BETTER_AUTH_URL: z.url().default("http://localhost:3000"),
-    BULL_BOARD_PASSWORD: z.string().min(8).default("admin123!"),
-    BULL_BOARD_USERNAME: z.string().default("admin"),
-    DATABASE_URL: z.url().optional(),
-    NODE_ENV: z
-      .enum(["development", "production", "test"])
-      .default("development"),
-    PORT: z.coerce.number().default(3000),
-    POSTGRES_DB: z.string().default("elysia_dev"),
-    POSTGRES_HOST: z.string().default("localhost"),
-    POSTGRES_PASSWORD: z.string().default("elysia_local_pass"),
-    POSTGRES_PORT: z.coerce.number().default(5432),
-    POSTGRES_USER: z.string().default("elysia"),
-    REDIS_HOST: z.string().default("localhost"),
-    REDIS_PASSWORD: z.string().optional(),
-    REDIS_PORT: z.coerce.number().default(6379),
-    REDIS_URL: z.url().optional(),
+    BETTER_AUTH_SECRET: z.string().min(32),
+    BETTER_AUTH_URL: z.url(),
+    BULL_BOARD_PASSWORD: z.string().min(8),
+    BULL_BOARD_USERNAME: z.string(),
+    DATABASE_URL: z.url(),
+    NODE_ENV: z.enum(["development", "production", "test"]),
+    PORT: z.coerce.number(),
+    REDIS_URL: z.url(),
+    RESEND_API_KEY: z.string(),
+    RESEND_FROM_EMAIL: z.email(),
   },
 });

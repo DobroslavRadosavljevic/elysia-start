@@ -31,6 +31,9 @@
     "format": "ultracite fix",
     "prepare": "husky",
     "typecheck": "tsc --noEmit",
+    "email:build": "email build --dir ./src/email/templates",
+    "email:dev": "email dev --dir ./src/email/templates --port 3001",
+    "email:export": "email export --dir ./src/email/templates",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -58,6 +61,7 @@
     "@elysiajs/openapi": "1.4.14",
     "@elysiajs/opentelemetry": "1.4.10",
     "@elysiajs/server-timing": "1.4.0",
+    "@react-email/components": "1.0.6",
     "@t3-oss/env-core": "0.13.10",
     "better-auth": "^1.4.18",
     "bullmq": "^5.67.2",
@@ -65,11 +69,17 @@
     "elysia": "1.4.22",
     "ioredis": "^5.9.2",
     "postgres": "^3.4.8",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "resend": "^6.9.1",
     "zod": "4.3.6"
   },
   "devDependencies": {
     "@commitlint/cli": "20.4.0",
     "@commitlint/config-conventional": "20.4.0",
+    "@react-email/preview-server": "5.2.5",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.1",
     "bun-types": "latest",
     "drizzle-kit": "^1.0.0-beta.12-a5629fb",
     "drizzle-zod": "^1.0.0-beta.12-a5629fb",
@@ -77,6 +87,7 @@
     "lint-staged": "16.2.7",
     "oxfmt": "0.27.0",
     "oxlint": "1.42.0",
+    "react-email": "5.2.5",
     "typescript": "5.9.3",
     "ultracite": "7.1.1"
   },
@@ -86,6 +97,9 @@
     ]
   },
   "trustedDependencies": [
-    "protobufjs"
+    "esbuild",
+    "msgpackr-extract",
+    "protobufjs",
+    "sharp"
   ]
 }

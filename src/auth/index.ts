@@ -58,11 +58,12 @@ type OpenAPIComponents = Record<string, unknown>;
 type OpenAPIPaths = Record<string, unknown>;
 
 export const authOpenAPI = {
-  getComponents: async (): Promise<OpenAPIComponents> => {
+  async getComponents() {
     const { components } = await getSchema();
     return components as OpenAPIComponents;
   },
-  getPaths: async (prefix = "/auth"): Promise<OpenAPIPaths> => {
+
+  async getPaths(prefix = "/auth") {
     const { paths } = await getSchema();
     const reference: OpenAPIPaths = Object.create(null);
 
