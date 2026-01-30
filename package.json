@@ -1,15 +1,56 @@
 {
   "name": "elysia-start",
   "version": "1.0.50",
+  "description": "A modern, batteries-included starter kit for building fast backend servers with Elysia and Bun",
+  "keywords": [
+    "api",
+    "backend",
+    "bun",
+    "elysia",
+    "starter-kit",
+    "typescript"
+  ],
+  "homepage": "https://github.com/DobroslavRadosavljevic/elysia-start#readme",
+  "bugs": {
+    "url": "https://github.com/DobroslavRadosavljevic/elysia-start/issues"
+  },
+  "license": "MIT",
+  "author": "DobroslavRadosavljevic",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DobroslavRadosavljevic/elysia-start.git"
+  },
+  "module": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
+    "test": "bun test",
+    "dev": "bun run --watch src/index.ts",
+    "lint": "ultracite check",
+    "format": "ultracite fix",
+    "prepare": "husky",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/cron": "^1.4.1",
+    "@elysiajs/openapi": "^1.4.14",
+    "@elysiajs/opentelemetry": "^1.4.10",
+    "@elysiajs/server-timing": "^1.4.0",
     "elysia": "latest"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "@commitlint/cli": "^20.4.0",
+    "@commitlint/config-conventional": "^20.4.0",
+    "bun-types": "latest",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "oxfmt": "^0.27.0",
+    "oxlint": "^1.42.0",
+    "typescript": "^5.9.3",
+    "ultracite": "7.1.1"
   },
-  "module": "src/index.js"
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
+      "bun x ultracite fix"
+    ]
+  }
 }

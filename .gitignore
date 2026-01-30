@@ -1,42 +1,192 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# Dependencies
+node_modules/
+.pnp
 .pnp.js
 
-# testing
-/coverage
+# Build & Output
+dist/
+build/
+out/
+.next/
+coverage/
 
-# next.js
-/.next/
-/out/
+# ===================
+# SECURITY - SECRETS
+# ===================
 
-# production
-/build
+# Environment files (may contain secrets)
+.env
+.env.*
+!.env.example
+*.env
 
-# misc
-.DS_Store
+# Private keys & certificates
 *.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.pub
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
 
-# debug
+# AWS
+.aws/
+aws-credentials
+*.aws
+
+# Google Cloud
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.*.json
+!.oxlintrc.json
+!.prettierrc.json
+!.eslintrc.json
+!bunfig.json
+*-credentials.json
+*-service-account.json
+gcloud/
+
+# Azure
+.azure/
+azure-credentials
+
+# Firebase
+firebase-adminsdk*.json
+firebaseServiceAccount*.json
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+
+# Vault & secrets managers
+.vault-token
+vault.json
+
+# API keys & tokens (common patterns)
+*secret*
+*secrets*
+*credential*
+*credentials*
+*apikey*
+*api_key*
+*api-key*
+*.secret
+!*.secret.example
+
+# ===================
+# DATABASE
+# ===================
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.sql
+dump.rdb
+*.rdb
+
+# ===================
+# LOGS & DEBUG
+# ===================
+*.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+bun-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
-# local env files
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# ===================
+# OS & EDITOR
+# ===================
 
-# vercel
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# IDEs (may contain path info)
+.idea/
+*.iml
+.vscode/launch.json
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+*.temp
+
+# ===================
+# MISC
+# ===================
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Bun
+*.bun
+bun.lockb
+
+# Package manager locks (keep bun.lock)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Traces & profiling
+**/*.trace
+*.heapsnapshot
+*.cpuprofile
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Temporary
+tmp/
+temp/
+.tmp/
+.temp/
+.cache/
+
+# OpenSrc (source code for packages)
+opensrc/
+
+# Vercel
 .vercel
 
-**/*.trace
-**/*.zip
-**/*.tar.gz
-**/*.tgz
-**/*.log
-package-lock.json
-**/*.bun
+# Turbo
+.turbo
