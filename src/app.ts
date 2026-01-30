@@ -8,7 +8,12 @@ import { z } from "zod";
 
 import { healthController } from "./features/health/health.controller";
 
-export const app = new Elysia()
+export const app = new Elysia({
+  serve: {
+    idleTimeout: 30,
+    maxRequestBodySize: 1024 * 1024 * 128,
+  },
+})
   .use(cors())
   .use(
     cron({

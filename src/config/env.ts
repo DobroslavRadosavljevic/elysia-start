@@ -16,7 +16,7 @@ export const env = createEnv({
   runtimeEnv: Bun.env,
 
   server: {
-    DATABASE_URL: z.string().url().optional(),
+    DATABASE_URL: z.url().optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
@@ -29,6 +29,6 @@ export const env = createEnv({
     REDIS_HOST: z.string().default("localhost"),
     REDIS_PASSWORD: z.string().optional(),
     REDIS_PORT: z.coerce.number().default(6379),
-    REDIS_URL: z.string().url().optional(),
+    REDIS_URL: z.url().optional(),
   },
 });

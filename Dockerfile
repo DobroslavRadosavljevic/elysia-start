@@ -18,6 +18,8 @@ RUN bun build \
     --compile \
     --minify-whitespace \
     --minify-syntax \
+    --bytecode \
+    --sourcemap=external \
     --target bun \
     --outfile server \
     ./src/index.ts

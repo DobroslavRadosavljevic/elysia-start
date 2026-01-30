@@ -145,7 +145,7 @@ open http://localhost:3000/openapi
 | `postgres:18-alpine` | 18      | ~240MB | Database    |
 | `redis:8-alpine`     | 8       | ~40MB  | Cache/Queue |
 
-The Elysia app is compiled to a standalone binary using `bun build --compile`, reducing memory usage and startup time.
+The Elysia app is compiled to a standalone binary with bytecode using `bun build --compile --bytecode`, reducing memory usage and improving startup time.
 
 ---
 
@@ -290,6 +290,7 @@ Build a portable binary that runs without Bun installed:
 
 ```bash
 bun build --compile --minify-whitespace --minify-syntax \
+  --bytecode --sourcemap=external \
   --target bun --outfile server ./src/index.ts
 
 # Run the binary
