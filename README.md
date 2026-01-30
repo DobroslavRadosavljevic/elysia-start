@@ -16,6 +16,7 @@ A modern, batteries-included starter kit for building fast backend servers with 
 - ⚡ **Server Timing** - Performance metrics
 - 🛠️ **TypeScript** - Full type safety
 - 🐳 **Docker** - Production-ready containerization with PostgreSQL & Redis
+- 🔄 **CI/CD** - GitHub Actions pipelines for testing, building & releasing
 - 🧹 **Ultracite** - Zero-config linting & formatting (Oxlint + Oxfmt)
 - 🔗 **Husky + Commitlint** - Git hooks & conventional commits
 
@@ -514,6 +515,87 @@ type(scope): message
 ```
 
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+---
+
+## 🔄 CI/CD Pipeline
+
+This project includes a complete **GitHub Actions** CI/CD pipeline.
+
+### Workflows
+
+| Workflow       | Trigger              | Description                               |
+| -------------- | -------------------- | ----------------------------------------- |
+| **CI**         | Push to `main`, PRs  | Lint, typecheck, test, build validation   |
+| **Docker**     | Push to `main`, tags | Build multi-platform images, push to GHCR |
+| **Migrations** | PRs (schema changes) | Validate database migrations              |
+| **Release**    | Version tags (`v*`)  | Create GitHub releases with changelog     |
+
+### CI Pipeline
+
+The CI workflow runs parallel jobs for fast feedback:
+
+```
+┌─────────┐   ┌────────────┐   ┌──────┐
+│  Lint   │   │ Typecheck  │   │ Test │
+└────┬────┘   └─────┬──────┘   └──┬───┘
+     │              │             │
+     └──────────────┼─────────────┘
+                    │
+               ┌────▼────┐
+               │  Build  │
+               └─────────┘
+```
+
+- **Lint & Format** - Runs `ultracite check`
+- **Type Check** - Runs `tsc --noEmit`
+- **Test** - Runs `bun test` with PostgreSQL & Redis service containers
+- **Build** - Validates production build (only after all checks pass)
+
+### Docker Images
+
+Images are automatically built and pushed to **GitHub Container Registry** (GHCR):
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/dobroslavradosavljevic/elysia-start:latest
+
+# Or a specific version
+docker pull ghcr.io/dobroslavradosavljevic/elysia-start:1.0.0
+```
+
+**Supported platforms:** `linux/amd64`, `linux/arm64`
+
+**Tag strategy:**
+
+- `latest` - Latest build from `main` branch
+- `1.2.3` - Semantic version tags
+- `1.2`, `1` - Major/minor version tags
+- `sha-abc1234` - Commit SHA tags
+
+### Releases
+
+Create a release by pushing a version tag:
+
+```bash
+# Create and push a version tag
+git tag v1.0.51
+git push origin v1.0.51
+```
+
+This will:
+
+1. Generate a changelog from conventional commits
+2. Create a GitHub Release
+3. Build and push Docker images with version tags
+
+### Dependabot
+
+Automated dependency updates are configured for:
+
+- **npm** - Weekly updates, grouped by package family
+- **Docker** - Base image updates
+- **GitHub Actions** - Workflow action updates
 
 ---
 
