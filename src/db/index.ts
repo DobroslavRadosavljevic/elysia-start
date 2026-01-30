@@ -1,14 +1,13 @@
 export { closeDb, db } from "./client";
 export {
+  accounts,
+  sessions,
   TodoInsert,
   TodoSelect,
   todos,
   type TodoInsertType,
   type TodoSelectType,
-  UserInsert,
-  UserSelect,
   users,
-  type UserInsertType,
-  type UserSelectType,
+  verifications,
 } from "./schema";
 export { timestamp } from "./utils";

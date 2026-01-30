@@ -1,3 +1,4 @@
+export { accounts, sessions, users, verifications } from "./auth.schema";
 export {
   TodoInsert,
   TodoSelect,
@@ -5,10 +6,3 @@ export {
   type TodoInsertType,
   type TodoSelectType,
 } from "./todos.schema";
-export {
-  UserInsert,
-  UserSelect,
-  users,
-  type UserInsertType,
-  type UserSelectType,
-} from "./users.schema";

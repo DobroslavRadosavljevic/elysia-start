@@ -6,10 +6,16 @@ import { serverTiming } from "@elysiajs/server-timing";
 import { Elysia } from "elysia";
 import { z } from "zod";
 
+import { authOpenAPI } from "./auth";
 import { healthController } from "./features/health/health.controller";
 import { todoController } from "./features/todos/todo.controller";
 import { exampleQueue } from "./queues";
-import { bullBoardPlugin, dbPlugin, redisPlugin } from "./shared/plugins";
+import {
+  authPlugin,
+  bullBoardPlugin,
+  dbPlugin,
+  redisPlugin,
+} from "./shared/plugins";
 
 export const app = new Elysia({
   serve: {
@@ -20,6 +26,7 @@ export const app = new Elysia({
   .use(cors())
   .use(dbPlugin)
   .use(redisPlugin)
+  .use(authPlugin)
   .use(bullBoardPlugin)
   .use(
     cron({
@@ -33,10 +40,12 @@ export const app = new Elysia({
   .use(
     openapi({
       documentation: {
+        components: (await authOpenAPI.getComponents()) as never,
         info: {
           title: "Elysia API",
           version: "1.0.0",
         },
+        paths: (await authOpenAPI.getPaths()) as never,
       },
       mapJsonSchema: {
         zod: z.toJSONSchema,

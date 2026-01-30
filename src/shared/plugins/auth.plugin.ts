@@ -1,8 +1,27 @@
 import { Elysia } from "elysia";
 
-export const authPlugin = new Elysia({ name: "plugin.auth" }).derive(
-  { as: "scoped" },
-  ({ headers }) => ({
-    bearer: headers.authorization?.replace("Bearer ", "") ?? null,
-  })
-);
+import { auth, type Session, type User } from "../../auth";
+
+export const authPlugin = new Elysia({ name: "plugin.auth" })
+  .mount(auth.handler)
+  .macro({
+    auth: {
+      async resolve({ request: { headers }, status }) {
+        const session = await auth.api.getSession({ headers });
+
+        if (!session) {
+          return status(401);
+        }
+
+        return {
+          session: session.session,
+          user: session.user,
+        };
+      },
+    },
+  });
+
+export interface AuthContext {
+  session: Session;
+  user: User;
+}

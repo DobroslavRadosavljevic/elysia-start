@@ -16,6 +16,11 @@ export const env = createEnv({
   runtimeEnv: process.env,
 
   server: {
+    BETTER_AUTH_SECRET: z
+      .string()
+      .min(32)
+      .default("development-secret-key-at-least-32-chars"),
+    BETTER_AUTH_URL: z.url().default("http://localhost:3000"),
     BULL_BOARD_PASSWORD: z.string().min(8).default("admin123!"),
     BULL_BOARD_USERNAME: z.string().default("admin"),
     DATABASE_URL: z.url().optional(),

@@ -8,6 +8,7 @@ A modern, batteries-included starter kit for building fast backend servers with 
 - ⚡ **Bun** - Incredibly fast JavaScript runtime
 - 🗄️ **Drizzle ORM** - Type-safe PostgreSQL with migrations
 - 🔴 **Redis** - ioredis client with KV utilities
+- 🔐 **Better Auth** - Type-safe authentication with Redis session storage
 - 📋 **BullMQ** - Redis-backed job queues with Bull Board UI
 - 📚 **OpenAPI** - Auto-generated API documentation
 - 🔒 **CORS** - Cross-origin resource sharing enabled
@@ -278,6 +279,60 @@ await redis.publish("channel", "message");
 
 ---
 
+## 🔐 Authentication (Better Auth)
+
+This project uses **Better Auth** for type-safe authentication with Redis-backed session storage.
+
+### Features
+
+- 📧 **Email & Password** - Built-in email/password authentication
+- 🚀 **Redis Session Storage** - Sessions stored in Redis for fast lookups
+- 🍪 **Cookie Caching** - 5-minute session cache to reduce Redis queries
+- 🔒 **Type-safe** - Full TypeScript support with inferred types
+
+### Auth Endpoints
+
+Better Auth automatically mounts these endpoints at `/auth/*`:
+
+| Endpoint                | Method | Description            |
+| ----------------------- | ------ | ---------------------- |
+| `/auth/sign-up/email`   | POST   | Register new user      |
+| `/auth/sign-in/email`   | POST   | Login with email       |
+| `/auth/sign-out`        | POST   | Logout                 |
+| `/auth/get-session`     | GET    | Get current session    |
+| `/auth/forget-password` | POST   | Request password reset |
+| `/auth/reset-password`  | POST   | Reset password         |
+
+### Protecting Routes
+
+Use the `auth` macro to protect routes:
+
+```typescript
+import { Elysia } from "elysia";
+import { authPlugin } from "../shared/plugins";
+
+const app = new Elysia().use(authPlugin).get(
+  "/protected",
+  ({ user, session }) => {
+    return { message: `Hello ${user.name}!`, sessionId: session.id };
+  },
+  {
+    auth: true, // Route requires authentication
+  }
+);
+```
+
+### Session & User Types
+
+```typescript
+import type { Session, User } from "../auth";
+
+// User type includes: id, email, name, emailVerified, image, createdAt, updatedAt
+// Session type includes: id, userId, token, expiresAt, ipAddress, userAgent
+```
+
+---
+
 ## 📋 Queue Jobs (BullMQ)
 
 This project includes **BullMQ** for background job processing with **Bull Board** for monitoring.
@@ -391,22 +446,24 @@ await emailQueue.upsertJobScheduler(
 
 Environment variables are validated at startup using [t3-env](https://github.com/t3-oss/t3-env).
 
-| Variable              | Type   | Default             | Description                                 |
-| --------------------- | ------ | ------------------- | ------------------------------------------- |
-| `NODE_ENV`            | enum   | `development`       | `development`, `production`, or `test`      |
-| `PORT`                | number | `3000`              | Server port                                 |
-| `POSTGRES_HOST`       | string | `localhost`         | PostgreSQL host                             |
-| `POSTGRES_PORT`       | number | `5432`              | PostgreSQL port                             |
-| `POSTGRES_USER`       | string | `elysia`            | PostgreSQL user                             |
-| `POSTGRES_PASSWORD`   | string | `elysia_local_pass` | PostgreSQL password                         |
-| `POSTGRES_DB`         | string | `elysia_dev`        | PostgreSQL database name                    |
-| `DATABASE_URL`        | string | -                   | Full PostgreSQL connection URL (optional)   |
-| `REDIS_HOST`          | string | `localhost`         | Redis host                                  |
-| `REDIS_PORT`          | number | `6379`              | Redis port                                  |
-| `REDIS_PASSWORD`      | string | -                   | Redis password (optional for local)         |
-| `REDIS_URL`           | string | -                   | Full Redis connection URL (optional)        |
-| `BULL_BOARD_USERNAME` | string | `admin`             | Bull Board dashboard username               |
-| `BULL_BOARD_PASSWORD` | string | `admin123!`         | Bull Board dashboard password (min 8 chars) |
+| Variable              | Type   | Default                        | Description                                 |
+| --------------------- | ------ | ------------------------------ | ------------------------------------------- |
+| `NODE_ENV`            | enum   | `development`                  | `development`, `production`, or `test`      |
+| `PORT`                | number | `3000`                         | Server port                                 |
+| `POSTGRES_HOST`       | string | `localhost`                    | PostgreSQL host                             |
+| `POSTGRES_PORT`       | number | `5432`                         | PostgreSQL port                             |
+| `POSTGRES_USER`       | string | `elysia`                       | PostgreSQL user                             |
+| `POSTGRES_PASSWORD`   | string | `elysia_local_pass`            | PostgreSQL password                         |
+| `POSTGRES_DB`         | string | `elysia_dev`                   | PostgreSQL database name                    |
+| `DATABASE_URL`        | string | -                              | Full PostgreSQL connection URL (optional)   |
+| `REDIS_HOST`          | string | `localhost`                    | Redis host                                  |
+| `REDIS_PORT`          | number | `6379`                         | Redis port                                  |
+| `REDIS_PASSWORD`      | string | -                              | Redis password (optional for local)         |
+| `REDIS_URL`           | string | -                              | Full Redis connection URL (optional)        |
+| `BETTER_AUTH_URL`     | string | `http://localhost:3000`        | Base URL for auth endpoints                 |
+| `BETTER_AUTH_SECRET`  | string | `development-secret-key-at...` | Auth secret key (min 32 chars)              |
+| `BULL_BOARD_USERNAME` | string | `admin`                        | Bull Board dashboard username               |
+| `BULL_BOARD_PASSWORD` | string | `admin123!`                    | Bull Board dashboard password (min 8 chars) |
 
 ---
 
@@ -445,12 +502,15 @@ elysia-start/
 ├── src/
 │   ├── index.ts              # Entry point - starts server
 │   ├── app.ts                # Elysia app with plugins
+│   ├── auth/                 # Authentication (Better Auth)
+│   │   └── index.ts          # Auth config with Redis sessions
 │   ├── config/
 │   │   └── env.ts            # Environment configuration (t3-env)
 │   ├── db/                   # Database layer (Drizzle ORM)
 │   │   ├── client.ts         # PostgreSQL connection
 │   │   ├── schema/           # Table definitions
-│   │   │   └── users.schema.ts
+│   │   │   ├── auth.schema.ts    # Auth tables (users, sessions, etc.)
+│   │   │   └── todos.schema.ts   # Todo table
 │   │   └── migrations/       # Generated migrations
 │   ├── redis/                # Redis layer (ioredis)
 │   │   ├── client.ts         # Redis connection
@@ -468,7 +528,7 @@ elysia-start/
 │   ├── shared/
 │   │   ├── errors/           # Custom error classes
 │   │   ├── models/           # Shared Zod schemas
-│   │   ├── plugins/          # Reusable Elysia plugins
+│   │   ├── plugins/          # Reusable Elysia plugins (db, redis, auth)
 │   │   └── utils/            # Utility functions
 │   └── types/                # Global TypeScript types
 ├── tests/
