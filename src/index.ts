@@ -12,6 +12,9 @@ console.log(
 console.log(
   `OpenAPI docs available at http://${app.server?.hostname}:${app.server?.port}/openapi`
 );
+console.log(
+  `Bull Board UI available at http://${app.server?.hostname}:${app.server?.port}/admin/queues`
+);
 
 const shutdown = async () => {
   console.log("Shutting down gracefully...");
