@@ -276,12 +276,13 @@ Write code that is **accessible, performant, type-safe, and maintainable**.
 - Use early returns to reduce nesting
 - Group related code together
 
-### Zod Schemas
+### Zod Schemas (v4)
 
-- Use **PascalCase** for Zod schema names (e.g., `UserResponse`, `CreatePostBody`)
-- Suffix inferred types with `Type` (e.g., `type UserResponseType = z.infer<typeof UserResponse>`)
+- Use **PascalCase** with **Schema** suffix for Zod schema names (e.g., `UserResponseSchema`, `TodoCreateSchema`)
+- Suffix inferred types with `Type` (e.g., `type UserResponseType = z.infer<typeof UserResponseSchema>`)
 - Place schemas in `*.model.ts` files within feature folders
 - Use Zod for all validation (routes, env config) - not Typebox
+- Use Zod v4 top-level validators: `z.uuid()`, `z.email()`, `z.url()` (not `z.string().uuid()` etc.)
 
 ---
 
