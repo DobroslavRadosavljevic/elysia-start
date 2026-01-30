@@ -1,5 +1,10 @@
 export { closeDb, db } from "./client";
 export {
+  TodoInsert,
+  TodoSelect,
+  todos,
+  type TodoInsertType,
+  type TodoSelectType,
   UserInsert,
   UserSelect,
   users,

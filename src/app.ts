@@ -7,6 +7,7 @@ import { Elysia } from "elysia";
 import { z } from "zod";
 
 import { healthController } from "./features/health/health.controller";
+import { todoController } from "./features/todos/todo.controller";
 import { exampleQueue } from "./queues";
 import { bullBoardPlugin, dbPlugin, redisPlugin } from "./shared/plugins";
 
@@ -52,4 +53,5 @@ export const app = new Elysia({
     });
     return { jobId: job.id, status: "queued" };
   })
-  .use(healthController);
+  .use(healthController)
+  .use(todoController);
