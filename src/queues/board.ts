@@ -12,6 +12,8 @@ createBullBoard({
     // https://github.com/oven-sh/bun/issues/5809#issuecomment-2065310008
     uiBasePath: "node_modules/@bull-board/ui",
   },
-  queues: allQueues.map((queue) => new BullMQAdapter(queue)),
+  queues: allQueues.map(
+    (queue) => new BullMQAdapter(queue, { readOnlyMode: true })
+  ),
   serverAdapter,
 });
