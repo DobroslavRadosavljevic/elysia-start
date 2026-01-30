@@ -23,6 +23,8 @@
   "module": "src/index.js",
   "scripts": {
     "start": "bun run src/index.ts",
+    "build": "bun build --target=bun --minify --sourcemap=external --outdir=dist ./src/index.ts",
+    "start:prod": "NODE_ENV=production bun dist/index.js",
     "test": "bun test",
     "dev": "bun run --watch src/index.ts",
     "lint": "ultracite check",

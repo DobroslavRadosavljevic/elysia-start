@@ -303,6 +303,8 @@ Environment variables are validated at startup using [t3-env](https://github.com
 | ---------------------- | ---------------------------------------- |
 | `bun run dev`          | Start development server with hot reload |
 | `bun run start`        | Start production server                  |
+| `bun run build`        | Build TypeScript to JavaScript for prod  |
+| `bun run start:prod`   | Run built production server              |
 | `bun test`             | Run tests                                |
 | `bun run lint`         | Check for linting issues                 |
 | `bun run format`       | Fix linting and formatting issues        |
@@ -437,7 +439,36 @@ bun build --compile --minify-whitespace --minify-syntax \
 ./server
 ```
 
-### Option 3: Cloud Platforms
+### Option 3: 🏃 Classic Build & Run
+
+Build TypeScript to JavaScript and run with Bun (requires Bun installed on server):
+
+```bash
+# Build for production
+bun run build
+
+# Run production server
+bun run start:prod
+```
+
+Or manually:
+
+```bash
+bun build --target=bun --minify --sourcemap=external --outdir=dist ./src/index.ts
+NODE_ENV=production bun dist/index.js
+```
+
+**Pros:**
+
+- ⚡ Faster build times than standalone binary
+- 📦 Smaller output (no embedded Bun runtime)
+- 🔄 Easy to update Bun version independently
+
+**Cons:**
+
+- Requires Bun installed on the target server
+
+### Option 4: ☁️ Cloud Platforms
 
 The Dockerfile is compatible with:
 
