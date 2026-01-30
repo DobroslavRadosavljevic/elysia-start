@@ -7,6 +7,7 @@ A backend server starter kit using **Elysia** and **Bun**.
 ```bash
 bun install          # Install dependencies
 bun run docker:up    # Start PostgreSQL & Redis (optional)
+bun run db:push      # Push schema to database
 bun run dev          # Start dev server with hot reload (port 3000)
 bun test             # Run tests
 ```
@@ -30,6 +31,10 @@ API docs available at http://localhost:3000/openapi
 | `bun run lint`         | Check for linting issues               |
 | `bun run format`       | Auto-fix linting and formatting        |
 | `bun run typecheck`    | TypeScript type checking               |
+| `bun run db:push`      | Push schema to database (dev)          |
+| `bun run db:generate`  | Generate migration files               |
+| `bun run db:migrate`   | Apply pending migrations               |
+| `bun run db:studio`    | Open Drizzle Studio GUI                |
 | `bun run docker:up`    | Start local PostgreSQL & Redis         |
 | `bun run docker:down`  | Stop local databases                   |
 | `bun run docker:clean` | Stop and remove volumes                |
@@ -44,6 +49,13 @@ elysia-start/
 ├── src/
 │   ├── index.ts              # Entry point - starts server
 │   ├── app.ts                # Elysia app with plugins
+│   ├── db/                   # Database layer (Drizzle ORM)
+│   │   ├── client.ts         # PostgreSQL connection
+│   │   ├── schema/           # Table definitions (*.schema.ts)
+│   │   └── migrations/       # Generated migrations
+│   ├── redis/                # Redis layer (ioredis)
+│   │   ├── client.ts         # Redis connection
+│   │   └── kv.ts             # KV utilities (get, set, del, etc.)
 │   ├── features/             # Feature-based modules
 │   │   └── health/           # Example feature
 │   │       ├── health.controller.ts
@@ -52,12 +64,13 @@ elysia-start/
 │   ├── shared/               # Shared utilities
 │   │   ├── errors/           # Custom error classes
 │   │   ├── models/           # Shared Zod schemas
-│   │   ├── plugins/          # Reusable Elysia plugins
+│   │   ├── plugins/          # Reusable Elysia plugins (db, redis, auth)
 │   │   └── utils/            # Utility functions
 │   ├── config/               # Configuration (t3-env)
 │   └── types/                # Global TypeScript types
 ├── tests/
 │   └── index.test.ts         # Test suite
+├── drizzle.config.ts         # Drizzle Kit configuration
 ├── .claude/                  # AI agent configuration
 ├── .husky/                   # Git hooks
 ├── Dockerfile                # Production build
@@ -95,6 +108,58 @@ The app uses these official Elysia plugins:
 | `@elysiajs/server-timing` | Performance metrics                   |
 
 All plugins are added via `.use()` method chaining.
+
+---
+
+## Database (Drizzle ORM)
+
+Uses **Drizzle ORM** with PostgreSQL and **drizzle-zod** for auto-generated Zod schemas.
+
+### Schema Definition
+
+Define tables in `src/db/schema/*.schema.ts`:
+
+```typescript
+import { pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+});
+
+export const UserInsert = createInsertSchema(users);
+export const UserSelect = createSelectSchema(users);
+```
+
+### Usage
+
+```typescript
+import { eq } from "drizzle-orm";
+import { db, users } from "../db";
+
+await db.insert(users).values({ email }).returning();
+await db.select().from(users).where(eq(users.id, id));
+```
+
+---
+
+## Redis (ioredis)
+
+Uses **ioredis** with lazy connect and KV utilities.
+
+### KV Utilities
+
+```typescript
+import { kv } from "../redis";
+
+await kv.set("key", { data: "value" }, 3600); // with TTL
+const data = await kv.get<MyType>("key");
+await kv.del("key");
+await kv.exists("key");
+await kv.incr("counter");
+await kv.decr("counter");
+```
 
 ---
 

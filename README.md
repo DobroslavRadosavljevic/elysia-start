@@ -6,6 +6,8 @@ A modern, batteries-included starter kit for building fast backend servers with 
 
 - 🚀 **Elysia** - Fast, type-safe web framework
 - ⚡ **Bun** - Incredibly fast JavaScript runtime
+- 🗄️ **Drizzle ORM** - Type-safe PostgreSQL with migrations
+- 🔴 **Redis** - ioredis client with KV utilities
 - 📚 **OpenAPI** - Auto-generated API documentation
 - 🔒 **CORS** - Cross-origin resource sharing enabled
 - ⏰ **Cron Jobs** - Built-in task scheduling
@@ -149,6 +151,131 @@ The Elysia app is compiled to a standalone binary with bytecode using `bun build
 
 ---
 
+## 🗄️ Database (Drizzle ORM)
+
+This project uses **Drizzle ORM** for type-safe PostgreSQL access with automatic Zod schema generation.
+
+### Setup
+
+```bash
+# Start PostgreSQL
+bun run docker:up
+
+# Push schema to database (development)
+bun run db:push
+
+# Or use migrations (production)
+bun run db:generate   # Generate migration files
+bun run db:migrate    # Apply migrations
+```
+
+### Database Scripts
+
+| Command               | Description                           |
+| --------------------- | ------------------------------------- |
+| `bun run db:push`     | Push schema directly to DB (dev only) |
+| `bun run db:generate` | Generate SQL migration files          |
+| `bun run db:migrate`  | Apply pending migrations              |
+| `bun run db:pull`     | Introspect DB and generate schema     |
+| `bun run db:studio`   | Open Drizzle Studio GUI               |
+| `bun run db:check`    | Check for schema conflicts            |
+| `bun run db:drop`     | Drop a migration file                 |
+
+### Schema Definition
+
+Define tables in `src/db/schema/*.schema.ts`:
+
+```typescript
+import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Auto-generated Zod schemas
+export const UserInsert = createInsertSchema(users);
+export const UserSelect = createSelectSchema(users);
+```
+
+### Usage in Services
+
+```typescript
+import { eq } from "drizzle-orm";
+import { db, users } from "../db";
+
+// Insert
+const [user] = await db.insert(users).values({ email, name }).returning();
+
+// Query
+const [user] = await db.select().from(users).where(eq(users.id, id));
+
+// Update
+await db.update(users).set({ name }).where(eq(users.id, id));
+
+// Delete
+await db.delete(users).where(eq(users.id, id));
+```
+
+---
+
+## 🔴 Redis (ioredis)
+
+Redis client with lazy connection and KV utilities for common operations.
+
+### KV Utilities
+
+```typescript
+import { kv } from "../redis";
+
+// Store JSON data with optional TTL (seconds)
+await kv.set("user:123", { name: "John", role: "admin" }, 3600);
+
+// Retrieve and parse JSON
+const user = await kv.get<{ name: string; role: string }>("user:123");
+
+// Check existence
+const exists = await kv.exists("user:123");
+
+// Delete
+await kv.del("user:123");
+
+// Counters
+await kv.incr("page:views");
+await kv.decr("stock:item:42");
+
+// TTL operations
+await kv.expire("session:abc", 1800);
+const ttl = await kv.ttl("session:abc");
+
+// Pattern matching
+const keys = await kv.keys("user:*");
+```
+
+### Direct Redis Access
+
+For advanced operations, access the ioredis client directly:
+
+```typescript
+import { redis } from "../redis";
+
+// Transactions
+const results = await redis
+  .multi()
+  .set("key1", "value1")
+  .set("key2", "value2")
+  .exec();
+
+// Pub/Sub, Streams, etc.
+await redis.publish("channel", "message");
+```
+
+---
+
 ## 🔐 Environment Variables
 
 Environment variables are validated at startup using [t3-env](https://github.com/t3-oss/t3-env).
@@ -180,6 +307,10 @@ Environment variables are validated at startup using [t3-env](https://github.com
 | `bun run lint`         | Check for linting issues                 |
 | `bun run format`       | Fix linting and formatting issues        |
 | `bun run typecheck`    | Run TypeScript type checking             |
+| `bun run db:push`      | Push schema to database (dev)            |
+| `bun run db:generate`  | Generate migration files                 |
+| `bun run db:migrate`   | Apply pending migrations                 |
+| `bun run db:studio`    | Open Drizzle Studio GUI                  |
 | `bun run docker:up`    | Start local PostgreSQL & Redis           |
 | `bun run docker:down`  | Stop local databases                     |
 | `bun run docker:logs`  | Follow database logs                     |
@@ -199,6 +330,14 @@ elysia-start/
 │   ├── app.ts                # Elysia app with plugins
 │   ├── config/
 │   │   └── env.ts            # Environment configuration (t3-env)
+│   ├── db/                   # Database layer (Drizzle ORM)
+│   │   ├── client.ts         # PostgreSQL connection
+│   │   ├── schema/           # Table definitions
+│   │   │   └── users.schema.ts
+│   │   └── migrations/       # Generated migrations
+│   ├── redis/                # Redis layer (ioredis)
+│   │   ├── client.ts         # Redis connection
+│   │   └── kv.ts             # KV utility functions
 │   ├── features/             # Feature-based modules
 │   │   └── health/           # Health check feature
 │   │       ├── health.controller.ts
@@ -212,6 +351,7 @@ elysia-start/
 │   └── types/                # Global TypeScript types
 ├── tests/
 │   └── index.test.ts         # Test suite
+├── drizzle.config.ts         # Drizzle Kit configuration
 ├── Dockerfile                # Production multi-stage build
 ├── docker-compose.yml        # Production stack (app + databases)
 ├── docker-compose.local.yml  # Local development (databases only)

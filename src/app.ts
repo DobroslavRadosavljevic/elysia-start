@@ -7,6 +7,7 @@ import { Elysia } from "elysia";
 import { z } from "zod";
 
 import { healthController } from "./features/health/health.controller";
+import { dbPlugin, redisPlugin } from "./shared/plugins";
 
 export const app = new Elysia({
   serve: {
@@ -15,6 +16,8 @@ export const app = new Elysia({
   },
 })
   .use(cors())
+  .use(dbPlugin)
+  .use(redisPlugin)
   .use(
     cron({
       name: "heartbeat",

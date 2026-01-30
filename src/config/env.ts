@@ -13,7 +13,7 @@ export const env = createEnv({
     }
     process.exit(1);
   },
-  runtimeEnv: Bun.env,
+  runtimeEnv: process.env,
 
   server: {
     DATABASE_URL: z.url().optional(),
