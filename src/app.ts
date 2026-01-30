@@ -7,7 +7,8 @@ import { Elysia } from "elysia";
 import { z } from "zod";
 
 import { healthController } from "./features/health/health.controller";
-import { dbPlugin, redisPlugin } from "./shared/plugins";
+import { exampleQueue } from "./queues";
+import { bullBoardPlugin, dbPlugin, redisPlugin } from "./shared/plugins";
 
 export const app = new Elysia({
   serve: {
@@ -18,6 +19,7 @@ export const app = new Elysia({
   .use(cors())
   .use(dbPlugin)
   .use(redisPlugin)
+  .use(bullBoardPlugin)
   .use(
     cron({
       name: "heartbeat",
@@ -43,4 +45,11 @@ export const app = new Elysia({
   .use(opentelemetry())
   .use(serverTiming())
   .get("/", () => "Hello Elysia")
+  // Test endpoint to add a job to the example queue
+  .get("/add-job", async ({ query }) => {
+    const job = await exampleQueue.add("process", {
+      message: query.message ?? "Hello from queue!",
+    });
+    return { jobId: job.id, status: "queued" };
+  })
   .use(healthController);

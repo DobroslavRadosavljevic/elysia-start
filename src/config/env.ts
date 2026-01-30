@@ -16,6 +16,8 @@ export const env = createEnv({
   runtimeEnv: process.env,
 
   server: {
+    BULL_BOARD_PASSWORD: z.string().min(8).default("admin123!"),
+    BULL_BOARD_USERNAME: z.string().default("admin"),
     DATABASE_URL: z.url().optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])

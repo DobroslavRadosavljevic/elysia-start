@@ -8,6 +8,7 @@ A modern, batteries-included starter kit for building fast backend servers with 
 - ⚡ **Bun** - Incredibly fast JavaScript runtime
 - 🗄️ **Drizzle ORM** - Type-safe PostgreSQL with migrations
 - 🔴 **Redis** - ioredis client with KV utilities
+- 📋 **BullMQ** - Redis-backed job queues with Bull Board UI
 - 📚 **OpenAPI** - Auto-generated API documentation
 - 🔒 **CORS** - Cross-origin resource sharing enabled
 - ⏰ **Cron Jobs** - Built-in task scheduling
@@ -276,24 +277,135 @@ await redis.publish("channel", "message");
 
 ---
 
+## 📋 Queue Jobs (BullMQ)
+
+This project includes **BullMQ** for background job processing with **Bull Board** for monitoring.
+
+### Bull Board UI
+
+Access the queue dashboard at [http://localhost:3000/admin/queues](http://localhost:3000/admin/queues)
+
+**Default credentials:**
+
+- Username: `admin`
+- Password: `admin123!` (change in production!)
+
+### Creating Queues
+
+Define queues in `src/queues/queues/`:
+
+```typescript
+import { Queue } from "bullmq";
+import { z } from "zod";
+import { bullMQConnection } from "../connection";
+
+// Define job data schema with Zod
+export const EmailJobData = z.object({
+  to: z.string().email(),
+  subject: z.string(),
+  body: z.string(),
+});
+
+export type EmailJobDataType = z.infer<typeof EmailJobData>;
+
+export const emailQueue = new Queue<EmailJobDataType>("email", {
+  connection: bullMQConnection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 1000 },
+  },
+});
+```
+
+### Creating Workers
+
+Define workers in `src/queues/workers/`:
+
+```typescript
+import { type Job, Worker } from "bullmq";
+import { createBullMQConnection } from "../connection";
+import type { EmailJobDataType } from "../queues/email.queue";
+
+export const emailWorker = new Worker<EmailJobDataType>(
+  "email",
+  async (job: Job<EmailJobDataType>) => {
+    const { to, subject, body } = job.data;
+    // Send email logic here
+    await job.updateProgress(100);
+    return { sent: true };
+  },
+  { connection: createBullMQConnection(), concurrency: 5 }
+);
+
+emailWorker.on("completed", (job) => console.log(`Job ${job.id} completed`));
+emailWorker.on("failed", (job, err) =>
+  console.error(`Job ${job?.id} failed:`, err)
+);
+```
+
+### Adding Jobs
+
+```typescript
+import { emailQueue } from "../queues";
+
+// Add a job
+const job = await emailQueue.add("send", {
+  to: "user@example.com",
+  subject: "Welcome!",
+  body: "Hello from BullMQ",
+});
+
+// Add with options
+await emailQueue.add("send", data, {
+  delay: 5000, // 5 second delay
+  priority: 1, // Higher priority
+  attempts: 5, // Override default attempts
+});
+
+// Add recurring job
+await emailQueue.upsertJobScheduler(
+  "daily-report",
+  { pattern: "0 9 * * *" }, // 9 AM daily
+  { name: "report", data: { type: "daily" } }
+);
+```
+
+### Registering New Queues
+
+1. Create queue file in `src/queues/queues/`
+2. Create worker file in `src/queues/workers/`
+3. Export from `src/queues/queues/index.ts`:
+   ```typescript
+   export { emailQueue } from "./email.queue";
+   export const allQueues = [exampleQueue, emailQueue];
+   ```
+4. Export from `src/queues/workers/index.ts`:
+   ```typescript
+   export const allWorkers = [exampleWorker, emailWorker];
+   ```
+
+---
+
 ## 🔐 Environment Variables
 
 Environment variables are validated at startup using [t3-env](https://github.com/t3-oss/t3-env).
 
-| Variable            | Type   | Default             | Description                               |
-| ------------------- | ------ | ------------------- | ----------------------------------------- |
-| `NODE_ENV`          | enum   | `development`       | `development`, `production`, or `test`    |
-| `PORT`              | number | `3000`              | Server port                               |
-| `POSTGRES_HOST`     | string | `localhost`         | PostgreSQL host                           |
-| `POSTGRES_PORT`     | number | `5432`              | PostgreSQL port                           |
-| `POSTGRES_USER`     | string | `elysia`            | PostgreSQL user                           |
-| `POSTGRES_PASSWORD` | string | `elysia_local_pass` | PostgreSQL password                       |
-| `POSTGRES_DB`       | string | `elysia_dev`        | PostgreSQL database name                  |
-| `DATABASE_URL`      | string | -                   | Full PostgreSQL connection URL (optional) |
-| `REDIS_HOST`        | string | `localhost`         | Redis host                                |
-| `REDIS_PORT`        | number | `6379`              | Redis port                                |
-| `REDIS_PASSWORD`    | string | -                   | Redis password (optional for local)       |
-| `REDIS_URL`         | string | -                   | Full Redis connection URL (optional)      |
+| Variable              | Type   | Default             | Description                                 |
+| --------------------- | ------ | ------------------- | ------------------------------------------- |
+| `NODE_ENV`            | enum   | `development`       | `development`, `production`, or `test`      |
+| `PORT`                | number | `3000`              | Server port                                 |
+| `POSTGRES_HOST`       | string | `localhost`         | PostgreSQL host                             |
+| `POSTGRES_PORT`       | number | `5432`              | PostgreSQL port                             |
+| `POSTGRES_USER`       | string | `elysia`            | PostgreSQL user                             |
+| `POSTGRES_PASSWORD`   | string | `elysia_local_pass` | PostgreSQL password                         |
+| `POSTGRES_DB`         | string | `elysia_dev`        | PostgreSQL database name                    |
+| `DATABASE_URL`        | string | -                   | Full PostgreSQL connection URL (optional)   |
+| `REDIS_HOST`          | string | `localhost`         | Redis host                                  |
+| `REDIS_PORT`          | number | `6379`              | Redis port                                  |
+| `REDIS_PASSWORD`      | string | -                   | Redis password (optional for local)         |
+| `REDIS_URL`           | string | -                   | Full Redis connection URL (optional)        |
+| `BULL_BOARD_USERNAME` | string | `admin`             | Bull Board dashboard username               |
+| `BULL_BOARD_PASSWORD` | string | `admin123!`         | Bull Board dashboard password (min 8 chars) |
 
 ---
 
@@ -340,6 +452,11 @@ elysia-start/
 │   ├── redis/                # Redis layer (ioredis)
 │   │   ├── client.ts         # Redis connection
 │   │   └── kv.ts             # KV utility functions
+│   ├── queues/               # Queue layer (BullMQ)
+│   │   ├── connection.ts     # BullMQ Redis connection
+│   │   ├── board.ts          # Bull Board setup
+│   │   ├── queues/           # Queue definitions
+│   │   └── workers/          # Worker definitions
 │   ├── features/             # Feature-based modules
 │   │   └── health/           # Health check feature
 │   │       ├── health.controller.ts

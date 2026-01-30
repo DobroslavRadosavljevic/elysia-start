@@ -48,12 +48,15 @@
     "docker:prod": "docker compose up -d"
   },
   "dependencies": {
+    "@bull-board/api": "^6.16.4",
+    "@bull-board/elysia": "^6.16.4",
     "@elysiajs/cors": "1.4.1",
     "@elysiajs/cron": "1.4.1",
     "@elysiajs/openapi": "1.4.14",
     "@elysiajs/opentelemetry": "1.4.10",
     "@elysiajs/server-timing": "1.4.0",
     "@t3-oss/env-core": "0.13.10",
+    "bullmq": "^5.67.2",
     "drizzle-orm": "^1.0.0-beta.12-a5629fb",
     "elysia": "1.4.22",
     "ioredis": "^5.9.2",
