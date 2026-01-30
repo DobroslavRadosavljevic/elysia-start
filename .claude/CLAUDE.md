@@ -31,18 +31,39 @@ API docs available at http://localhost:3000/openapi
 ```
 elysia-start/
 ├── src/
-│   └── index.ts          # Main app entry point
+│   ├── index.ts              # Entry point - starts server
+│   ├── app.ts                # Elysia app with plugins
+│   ├── features/             # Feature-based modules
+│   │   └── health/           # Example feature
+│   │       ├── health.controller.ts
+│   │       ├── health.service.ts
+│   │       └── health.model.ts
+│   ├── shared/               # Shared utilities
+│   │   ├── errors/           # Custom error classes
+│   │   ├── models/           # Shared Zod schemas
+│   │   ├── plugins/          # Reusable Elysia plugins
+│   │   └── utils/            # Utility functions
+│   ├── config/               # Configuration (t3-env)
+│   └── types/                # Global TypeScript types
 ├── tests/
-│   └── index.test.ts     # Test suite
-├── .claude/              # AI agent configuration
-├── .husky/               # Git hooks (pre-commit, commit-msg)
+│   └── index.test.ts         # Test suite
+├── .claude/                  # AI agent configuration
+├── .husky/                   # Git hooks
 ├── package.json
 ├── tsconfig.json
-├── bunfig.toml           # Bun config (test root)
-├── .oxlintrc.json        # Linter rules
-├── .oxfmtrc.jsonc        # Formatter rules
-└── commitlint.config.ts  # Conventional commits
+├── bunfig.toml               # Bun config
+├── .oxlintrc.json            # Linter rules
+├── .oxfmtrc.jsonc            # Formatter rules
+└── commitlint.config.ts      # Conventional commits
 ```
+
+### Feature Structure
+
+Each feature folder contains:
+
+- `*.controller.ts` - HTTP routing, request validation
+- `*.service.ts` - Business logic (framework-agnostic)
+- `*.model.ts` - Zod validation schemas
 
 ---
 
@@ -139,6 +160,13 @@ Write code that is **accessible, performant, type-safe, and maintainable**.
 - Extract complex conditions into well-named variables
 - Use early returns to reduce nesting
 - Group related code together
+
+### Zod Schemas
+
+- Use **PascalCase** for Zod schema names (e.g., `UserResponse`, `CreatePostBody`)
+- Suffix inferred types with `Type` (e.g., `type UserResponseType = z.infer<typeof UserResponse>`)
+- Place schemas in `*.model.ts` files within feature folders
+- Use Zod for all validation (routes, env config) - not Typebox
 
 ---
 

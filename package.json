@@ -22,6 +22,7 @@
   },
   "module": "src/index.js",
   "scripts": {
+    "start": "bun run src/index.ts",
     "test": "bun test",
     "dev": "bun run --watch src/index.ts",
     "lint": "ultracite check",
@@ -35,7 +36,9 @@
     "@elysiajs/openapi": "^1.4.14",
     "@elysiajs/opentelemetry": "^1.4.10",
     "@elysiajs/server-timing": "^1.4.0",
-    "elysia": "latest"
+    "@t3-oss/env-core": "^0.13.10",
+    "elysia": "latest",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.0",
