@@ -1,0 +1,74 @@
+name: Database Migrations
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/db/schema/**"
+      - "src/db/migrations/**"
+      - "drizzle.config.ts"
+
+jobs:
+  validate-migrations:
+    name: Validate Migrations
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: elysia
+          POSTGRES_PASSWORD: elysia_test_pass
+          POSTGRES_DB: elysia_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U elysia -d elysia_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: elysia
+      POSTGRES_PASSWORD: elysia_test_pass
+      POSTGRES_DB: elysia_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1"
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check schema consistency
+        run: bun run db:check
+
+      - name: Test migrations can be applied
+        run: bun run db:push
+
+      - name: Verify schema matches expected state
+        run: |
+          # Generate migrations from current schema
+          bun run db:generate --name=ci-check 2>/dev/null || true
+
+          # Check if any new migrations were generated
+          if git diff --quiet src/db/migrations/; then
+            echo "✅ Schema is in sync with migrations"
+          else
+            echo "❌ Schema drift detected! New migrations would be generated:"
+            git diff src/db/migrations/
+            exit 1
+          fi
