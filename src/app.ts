@@ -9,12 +9,14 @@ import { z } from "zod";
 import { authOpenAPI } from "./auth";
 import { healthController } from "./features/health/health.controller";
 import { todoController } from "./features/todos/todo.controller";
+import { uploadController } from "./features/uploads/upload.controller";
 import { exampleQueue } from "./queues";
 import {
   authPlugin,
   bullBoardPlugin,
   dbPlugin,
   redisPlugin,
+  s3Plugin,
 } from "./shared/plugins";
 
 export const app = new Elysia({
@@ -26,6 +28,7 @@ export const app = new Elysia({
   .use(cors())
   .use(dbPlugin)
   .use(redisPlugin)
+  .use(s3Plugin)
   .use(authPlugin)
   .use(bullBoardPlugin)
   .use(
@@ -63,4 +66,5 @@ export const app = new Elysia({
     return { jobId: job.id, status: "queued" };
   })
   .use(healthController)
-  .use(todoController);
+  .use(todoController)
+  .use(uploadController);

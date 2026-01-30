@@ -26,5 +26,12 @@ export const env = createEnv({
     REDIS_URL: z.url(),
     RESEND_API_KEY: z.string(),
     RESEND_FROM_EMAIL: z.email(),
+    // S3 Storage
+    S3_ACCESS_KEY_ID: z.string(),
+    S3_BUCKET: z.string(),
+    S3_ENDPOINT: z.url(),
+    S3_PUBLIC_URL: z.url(),
+    S3_REGION: z.string(),
+    S3_SECRET_ACCESS_KEY: z.string(),
   },
 });

@@ -8,6 +8,7 @@ A modern, batteries-included starter kit for building fast backend servers with 
 - ⚡ **Bun** - Incredibly fast JavaScript runtime
 - 🗄️ **Drizzle ORM** - Type-safe PostgreSQL with migrations
 - 🔴 **Redis** - ioredis client with KV utilities
+- 📦 **S3 Storage** - Bun native S3 client with presigned URLs (AWS S3, Cloudflare R2, MinIO)
 - 🔐 **Better Auth** - Type-safe authentication with Redis session storage
 - 📧 **Resend** - Reliable email delivery with tracking
 - 🎨 **React Email** - Beautiful email templates built with JSX
@@ -277,6 +278,122 @@ const results = await redis
 
 // Pub/Sub, Streams, etc.
 await redis.publish("channel", "message");
+```
+
+---
+
+## 📦 S3 Storage (Bun Native)
+
+This project uses **Bun's native S3 client** for file storage, supporting AWS S3 and S3-compatible services (Cloudflare R2, MinIO, etc.).
+
+### Features
+
+- 🚀 **Native Bun API** - No AWS SDK needed, uses Bun's built-in S3 support
+- 🔗 **Presigned URLs** - Generate secure upload/download URLs for direct client access
+- 📤 **Multipart Uploads** - Stream large files with automatic chunking
+- 🌐 **S3-Compatible** - Works with AWS S3, Cloudflare R2, MinIO, and more
+
+### S3 Service
+
+```typescript
+import { s3Service } from "../s3";
+
+// Upload a file
+await s3Service.upload("documents/report.pdf", fileData, {
+  contentType: "application/pdf",
+});
+
+// Check if file exists
+const exists = await s3Service.exists("documents/report.pdf");
+
+// Get file metadata
+const info = await s3Service.getInfo("documents/report.pdf");
+// { key, size, type }
+
+// Read file contents
+const text = await s3Service.getText("config.json");
+const json = await s3Service.getJson<Config>("config.json");
+const buffer = await s3Service.getArrayBuffer("image.png");
+
+// Delete files
+await s3Service.delete("old-file.txt");
+await s3Service.deleteMany(["file1.txt", "file2.txt"]);
+
+// Copy and move
+await s3Service.copy("source.txt", "destination.txt");
+await s3Service.move("old-path.txt", "new-path.txt");
+
+// Get public URL (if CDN configured)
+const publicUrl = s3Service.getPublicUrl("images/photo.jpg");
+```
+
+### Presigned URLs
+
+Generate secure URLs for direct client uploads/downloads without exposing credentials:
+
+```typescript
+import { s3Service } from "../s3";
+
+// Generate upload URL (client uploads directly to S3)
+const uploadUrl = s3Service.presignUpload("uploads/user-file.pdf", {
+  expiresIn: 3600, // 1 hour
+  acl: "private",
+});
+
+// Generate download URL
+const downloadUrl = s3Service.presignDownload("documents/report.pdf", {
+  expiresIn: 3600,
+  contentDisposition: 'attachment; filename="report.pdf"',
+});
+```
+
+### Multipart Uploads (Large Files)
+
+Stream large files with automatic chunking:
+
+```typescript
+import { s3Service } from "../s3";
+
+const writer = s3Service.createMultipartUpload("videos/large-file.mp4", {
+  partSize: 10 * 1024 * 1024, // 10MB chunks
+  queueSize: 4, // 4 concurrent uploads
+  retry: 3, // Retry failed parts
+});
+
+for await (const chunk of readableStream) {
+  writer.write(chunk);
+}
+await writer.end();
+```
+
+### REST API Endpoints
+
+The uploads feature provides REST endpoints for file operations:
+
+| Endpoint                    | Method | Description                         |
+| --------------------------- | ------ | ----------------------------------- |
+| `/uploads/presign/upload`   | POST   | Get presigned URL for upload        |
+| `/uploads/presign/download` | POST   | Get presigned URL for download      |
+| `/uploads/info/:key`        | GET    | Get file metadata                   |
+| `/uploads/:key`             | DELETE | Delete a file                       |
+| `/uploads/bulk-delete`      | POST   | Delete multiple files               |
+| `/uploads/direct`           | POST   | Direct multipart upload (100MB max) |
+
+### Generate Unique Keys
+
+```typescript
+import { s3Service } from "../s3";
+
+// Generate unique key with prefix
+const key = s3Service.generateKey({
+  prefix: "avatars",
+  filename: "profile.png",
+});
+// "avatars/profile.png"
+
+// Auto-generate with timestamp
+const key = s3Service.generateKey({ prefix: "uploads" });
+// "uploads/1706745600000-a1b2c3d4"
 ```
 
 ---
@@ -574,28 +691,35 @@ await emailQueue.upsertJobScheduler(
 
 Environment variables are validated at startup using [t3-env](https://github.com/t3-oss/t3-env). **All variables are required** - the server won't start if any are missing.
 
-| Variable              | Type   | Description                            |
-| --------------------- | ------ | -------------------------------------- |
-| `NODE_ENV`            | enum   | `development`, `production`, or `test` |
-| `PORT`                | number | Server port                            |
-| `DATABASE_URL`        | url    | PostgreSQL connection URL              |
-| `REDIS_URL`           | url    | Redis connection URL                   |
-| `BETTER_AUTH_URL`     | url    | Base URL for auth endpoints            |
-| `BETTER_AUTH_SECRET`  | string | Auth secret key (min 32 chars)         |
-| `BULL_BOARD_USERNAME` | string | Bull Board dashboard username          |
-| `BULL_BOARD_PASSWORD` | string | Bull Board dashboard password (min 8)  |
-| `RESEND_API_KEY`      | string | Resend API key for email delivery      |
-| `RESEND_FROM_EMAIL`   | email  | Default sender email address           |
+| Variable               | Type   | Description                            |
+| ---------------------- | ------ | -------------------------------------- |
+| `NODE_ENV`             | enum   | `development`, `production`, or `test` |
+| `PORT`                 | number | Server port                            |
+| `DATABASE_URL`         | url    | PostgreSQL connection URL              |
+| `REDIS_URL`            | url    | Redis connection URL                   |
+| `BETTER_AUTH_URL`      | url    | Base URL for auth endpoints            |
+| `BETTER_AUTH_SECRET`   | string | Auth secret key (min 32 chars)         |
+| `BULL_BOARD_USERNAME`  | string | Bull Board dashboard username          |
+| `BULL_BOARD_PASSWORD`  | string | Bull Board dashboard password (min 8)  |
+| `RESEND_API_KEY`       | string | Resend API key for email delivery      |
+| `RESEND_FROM_EMAIL`    | email  | Default sender email address           |
+| `S3_ACCESS_KEY_ID`     | string | S3 access key ID                       |
+| `S3_SECRET_ACCESS_KEY` | string | S3 secret access key                   |
+| `S3_BUCKET`            | string | S3 bucket name                         |
+| `S3_REGION`            | string | S3 region (e.g., `us-east-1`, `auto`)  |
+| `S3_ENDPOINT`          | url    | S3 endpoint URL                        |
+| `S3_PUBLIC_URL`        | url    | Public/CDN URL for the bucket          |
 
 ### Removing Unused Features
 
 If you don't need certain features, remove both the env variable from `src/config/env.ts` and the related code:
 
-| Feature        | Env Variables   | Code to Remove                   |
-| -------------- | --------------- | -------------------------------- |
-| Authentication | `BETTER_AUTH_*` | `src/auth/`, auth plugin         |
-| Email          | `RESEND_*`      | `src/email/`, email plugin       |
-| Queue Jobs     | `BULL_BOARD_*`  | `src/queues/`, Bull Board routes |
+| Feature        | Env Variables   | Code to Remove                                |
+| -------------- | --------------- | --------------------------------------------- |
+| Authentication | `BETTER_AUTH_*` | `src/auth/`, auth plugin                      |
+| Email          | `RESEND_*`      | `src/email/`, email plugin                    |
+| Queue Jobs     | `BULL_BOARD_*`  | `src/queues/`, Bull Board routes              |
+| S3 Storage     | `S3_*`          | `src/s3/`, `src/features/uploads/`, s3 plugin |
 
 ---
 
@@ -650,6 +774,10 @@ elysia-start/
 │   ├── redis/                # Redis layer (ioredis)
 │   │   ├── client.ts         # Redis connection
 │   │   └── kv.service.ts     # KV service class
+│   ├── s3/                   # S3 storage layer (Bun native)
+│   │   ├── client.ts         # S3 client configuration
+│   │   ├── s3.service.ts     # S3 service class
+│   │   └── s3.model.ts       # Zod schemas for S3
 │   ├── email/                # Email layer (React Email + Resend)
 │   │   ├── client.ts         # Resend client
 │   │   ├── email.service.ts  # Email service class
@@ -661,14 +789,18 @@ elysia-start/
 │   │   ├── queues/           # Queue definitions
 │   │   └── workers/          # Worker definitions
 │   ├── features/             # Feature-based modules
-│   │   └── health/           # Health check feature
-│   │       ├── health.controller.ts
-│   │       ├── health.service.ts
-│   │       └── health.model.ts
+│   │   ├── health/           # Health check feature
+│   │   │   ├── health.controller.ts
+│   │   │   ├── health.service.ts
+│   │   │   └── health.model.ts
+│   │   └── uploads/          # File uploads feature
+│   │       ├── upload.controller.ts
+│   │       ├── upload.service.ts
+│   │       └── upload.model.ts
 │   ├── shared/
 │   │   ├── errors/           # Custom error classes
 │   │   ├── models/           # Shared Zod schemas
-│   │   ├── plugins/          # Reusable Elysia plugins (db, redis, auth, email)
+│   │   ├── plugins/          # Reusable Elysia plugins (db, redis, s3, auth, email)
 │   │   └── utils/            # Utility functions
 │   └── types/                # Global TypeScript types
 ├── tests/

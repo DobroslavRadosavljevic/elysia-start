@@ -19,6 +19,8 @@ API docs available at http://localhost:3000/openapi
 ## Important Rules
 
 - **README.md**: MUST use emojis in section headers (e.g., `## 🚀 Quick Start`)
+- **Environment variables**: ALL env variables are REQUIRED (never use `.optional()` in env config)
+- **Function return types**: Do NOT add explicit return types to functions - let TypeScript infer them
 
 ---
 
@@ -243,7 +245,7 @@ Write code that is **accessible, performant, type-safe, and maintainable**.
 
 ### Type Safety
 
-- Use explicit types for function parameters and return values
+- Use explicit types for function parameters only - do NOT add return types (let TypeScript infer them)
 - Prefer `unknown` over `any`
 - Use const assertions (`as const`) for immutable values
 - Leverage TypeScript's type narrowing instead of assertions
