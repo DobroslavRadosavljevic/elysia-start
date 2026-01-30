@@ -1,0 +1,1 @@
+export { timestamp } from "./timestamp";

@@ -6,3 +6,4 @@ export {
   type UserInsertType,
   type UserSelectType,
 } from "./schema";
+export { timestamp } from "./utils";
