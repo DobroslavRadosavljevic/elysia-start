@@ -6,6 +6,7 @@ A backend server starter kit using **Elysia** and **Bun**.
 
 ```bash
 bun install          # Install dependencies
+bun run docker:up    # Start PostgreSQL & Redis (optional)
 bun run dev          # Start dev server with hot reload (port 3000)
 bun test             # Run tests
 ```
@@ -14,15 +15,25 @@ API docs available at http://localhost:3000/openapi
 
 ---
 
+## Important Rules
+
+- **README.md**: MUST use emojis in section headers (e.g., `## 🚀 Quick Start`)
+
+---
+
 ## Scripts
 
-| Command             | Description                            |
-| ------------------- | -------------------------------------- |
-| `bun run dev`       | Start dev server with hot reload       |
-| `bun test`          | Run test suite (Bun's built-in runner) |
-| `bun run lint`      | Check for linting issues               |
-| `bun run format`    | Auto-fix linting and formatting        |
-| `bun run typecheck` | TypeScript type checking               |
+| Command                | Description                            |
+| ---------------------- | -------------------------------------- |
+| `bun run dev`          | Start dev server with hot reload       |
+| `bun test`             | Run test suite (Bun's built-in runner) |
+| `bun run lint`         | Check for linting issues               |
+| `bun run format`       | Auto-fix linting and formatting        |
+| `bun run typecheck`    | TypeScript type checking               |
+| `bun run docker:up`    | Start local PostgreSQL & Redis         |
+| `bun run docker:down`  | Stop local databases                   |
+| `bun run docker:clean` | Stop and remove volumes                |
+| `bun run docker:prod`  | Start full production stack            |
 
 ---
 
@@ -49,6 +60,10 @@ elysia-start/
 │   └── index.test.ts         # Test suite
 ├── .claude/                  # AI agent configuration
 ├── .husky/                   # Git hooks
+├── Dockerfile                # Production build
+├── docker-compose.yml        # Production stack
+├── docker-compose.local.yml  # Local databases
+├── .env.example              # Environment template
 ├── package.json
 ├── tsconfig.json
 ├── bunfig.toml               # Bun config
@@ -80,6 +95,36 @@ The app uses these official Elysia plugins:
 | `@elysiajs/server-timing` | Performance metrics                   |
 
 All plugins are added via `.use()` method chaining.
+
+---
+
+## Docker
+
+### Local Development
+
+```bash
+bun run docker:up    # Start PostgreSQL 18 & Redis 8
+bun run docker:down  # Stop containers
+bun run docker:clean # Remove volumes (fresh start)
+```
+
+**Default credentials** (no `.env` needed):
+
+- PostgreSQL: `elysia:elysia_local_pass@localhost:5432/elysia_dev`
+- Redis: `localhost:6379` (no password)
+
+### Production
+
+```bash
+cp .env.example .env  # Configure POSTGRES_PASSWORD & REDIS_PASSWORD
+bun run docker:prod   # Start app + databases
+```
+
+### Files
+
+- `Dockerfile` - Multi-stage build, compiles to binary via `bun build --compile`
+- `docker-compose.yml` - Production stack (app + PostgreSQL + Redis)
+- `docker-compose.local.yml` - Local dev (databases only)
 
 ---
 

@@ -16,15 +16,19 @@ export const env = createEnv({
   runtimeEnv: Bun.env,
 
   server: {
+    DATABASE_URL: z.string().url().optional(),
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
     PORT: z.coerce.number().default(3000),
-
-    // Example patterns for common use cases:
-    // DATABASE_URL: z.string().url(),
-    // API_KEY: z.string().min(1),
-    // DEBUG: z.string().transform((s) => s === "true").default("false"),
-    // ALLOWED_ORIGINS: z.string().transform((s) => s.split(",")).default(""),
+    POSTGRES_DB: z.string().default("elysia_dev"),
+    POSTGRES_HOST: z.string().default("localhost"),
+    POSTGRES_PASSWORD: z.string().default("elysia_local_pass"),
+    POSTGRES_PORT: z.coerce.number().default(5432),
+    POSTGRES_USER: z.string().default("elysia"),
+    REDIS_HOST: z.string().default("localhost"),
+    REDIS_PASSWORD: z.string().optional(),
+    REDIS_PORT: z.coerce.number().default(6379),
+    REDIS_URL: z.string().url().optional(),
   },
 });

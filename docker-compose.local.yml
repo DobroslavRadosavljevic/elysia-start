@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: elysia-postgres-local
+    environment:
+      POSTGRES_USER: elysia
+      POSTGRES_PASSWORD: elysia_local_pass
+      POSTGRES_DB: elysia_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_local_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elysia -d elysia_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  redis:
+    image: redis:8-alpine
+    container_name: elysia-redis-local
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_local_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  postgres_local_data:
+  redis_local_data:

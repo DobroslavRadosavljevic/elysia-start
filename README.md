@@ -12,6 +12,7 @@ A modern, batteries-included starter kit for building fast backend servers with 
 - 📊 **OpenTelemetry** - Observability and tracing
 - ⚡ **Server Timing** - Performance metrics
 - 🛠️ **TypeScript** - Full type safety
+- 🐳 **Docker** - Production-ready containerization with PostgreSQL & Redis
 - 🧹 **Ultracite** - Zero-config linting & formatting (Oxlint + Oxfmt)
 - 🔗 **Husky + Commitlint** - Git hooks & conventional commits
 
@@ -20,11 +21,14 @@ A modern, batteries-included starter kit for building fast backend servers with 
 - **Elysia** - End-to-end type safety with minimal runtime overhead
 - **Bun** - All-in-one runtime with native TypeScript, fast package manager, and built-in test runner
 
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - [Bun](https://bun.sh) v1.0 or higher
+- [Docker](https://docker.com) (optional, for databases)
 
 ### Installation
 
@@ -48,26 +52,185 @@ Open [http://localhost:3000](http://localhost:3000) to see your server running.
 
 📚 API documentation available at [http://localhost:3000/openapi](http://localhost:3000/openapi)
 
+---
+
+## 🐳 Docker Setup
+
+### Local Development (Databases Only)
+
+Start PostgreSQL and Redis containers for local development:
+
+```bash
+# Start databases
+bun run docker:up
+
+# Check status
+bun run docker:ps
+
+# View logs
+bun run docker:logs
+
+# Stop databases
+bun run docker:down
+
+# Stop and remove volumes (fresh start)
+bun run docker:clean
+```
+
+**Default local credentials** (no `.env` needed):
+
+| Service    | Host      | Port | User   | Password          | Database   |
+| ---------- | --------- | ---- | ------ | ----------------- | ---------- |
+| PostgreSQL | localhost | 5432 | elysia | elysia_local_pass | elysia_dev |
+| Redis      | localhost | 6379 | -      | (none)            | -          |
+
+### 🏭 Production Deployment
+
+The production setup includes the Elysia app, PostgreSQL, and Redis in a single stack.
+
+#### 1. Configure Environment
+
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit with your production values
+nano .env
+```
+
+Required environment variables for production:
+
+```bash
+# Server
+NODE_ENV=production
+PORT=3000
+
+# PostgreSQL (required)
+POSTGRES_USER=elysia
+POSTGRES_PASSWORD=your_secure_password    # REQUIRED
+POSTGRES_DB=elysia_db
+
+# Redis (required)
+REDIS_PASSWORD=your_redis_password        # REQUIRED
+```
+
+#### 2. Build and Deploy
+
+```bash
+# Build the production image
+bun run docker:build
+
+# Start the full stack (app + databases)
+bun run docker:prod
+
+# Check all services
+docker compose ps
+```
+
+#### 3. Verify Deployment
+
+```bash
+# Health check
+curl http://localhost:3000/health
+
+# API docs
+open http://localhost:3000/openapi
+```
+
+### 📦 Docker Images
+
+| Image                | Version | Size   | Purpose     |
+| -------------------- | ------- | ------ | ----------- |
+| `oven/bun:1-alpine`  | 1.x     | ~95MB  | App runtime |
+| `postgres:18-alpine` | 18      | ~240MB | Database    |
+| `redis:8-alpine`     | 8       | ~40MB  | Cache/Queue |
+
+The Elysia app is compiled to a standalone binary using `bun build --compile`, reducing memory usage and startup time.
+
+---
+
+## 🔐 Environment Variables
+
+Environment variables are validated at startup using [t3-env](https://github.com/t3-oss/t3-env).
+
+| Variable            | Type   | Default             | Description                               |
+| ------------------- | ------ | ------------------- | ----------------------------------------- |
+| `NODE_ENV`          | enum   | `development`       | `development`, `production`, or `test`    |
+| `PORT`              | number | `3000`              | Server port                               |
+| `POSTGRES_HOST`     | string | `localhost`         | PostgreSQL host                           |
+| `POSTGRES_PORT`     | number | `5432`              | PostgreSQL port                           |
+| `POSTGRES_USER`     | string | `elysia`            | PostgreSQL user                           |
+| `POSTGRES_PASSWORD` | string | `elysia_local_pass` | PostgreSQL password                       |
+| `POSTGRES_DB`       | string | `elysia_dev`        | PostgreSQL database name                  |
+| `DATABASE_URL`      | string | -                   | Full PostgreSQL connection URL (optional) |
+| `REDIS_HOST`        | string | `localhost`         | Redis host                                |
+| `REDIS_PORT`        | number | `6379`              | Redis port                                |
+| `REDIS_PASSWORD`    | string | -                   | Redis password (optional for local)       |
+| `REDIS_URL`         | string | -                   | Full Redis connection URL (optional)      |
+
+---
+
 ## 📜 Scripts
 
-| Command             | Description                              |
-| ------------------- | ---------------------------------------- |
-| `bun run dev`       | Start development server with hot reload |
-| `bun test`          | Run tests                                |
-| `bun run lint`      | Check for linting issues                 |
-| `bun run format`    | Fix linting and formatting issues        |
-| `bun run typecheck` | Run TypeScript type checking             |
+| Command                | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `bun run dev`          | Start development server with hot reload |
+| `bun run start`        | Start production server                  |
+| `bun test`             | Run tests                                |
+| `bun run lint`         | Check for linting issues                 |
+| `bun run format`       | Fix linting and formatting issues        |
+| `bun run typecheck`    | Run TypeScript type checking             |
+| `bun run docker:up`    | Start local PostgreSQL & Redis           |
+| `bun run docker:down`  | Stop local databases                     |
+| `bun run docker:logs`  | Follow database logs                     |
+| `bun run docker:ps`    | Show running containers                  |
+| `bun run docker:clean` | Stop databases and remove volumes        |
+| `bun run docker:build` | Build production Docker image            |
+| `bun run docker:prod`  | Start full production stack              |
+
+---
 
 ## 📁 Project Structure
 
 ```
 elysia-start/
 ├── src/
-│   └── index.ts      # Application entry point
-├── tests/            # Test files
-├── .husky/           # Git hooks
-└── package.json
+│   ├── index.ts              # Entry point - starts server
+│   ├── app.ts                # Elysia app with plugins
+│   ├── config/
+│   │   └── env.ts            # Environment configuration (t3-env)
+│   ├── features/             # Feature-based modules
+│   │   └── health/           # Health check feature
+│   │       ├── health.controller.ts
+│   │       ├── health.service.ts
+│   │       └── health.model.ts
+│   ├── shared/
+│   │   ├── errors/           # Custom error classes
+│   │   ├── models/           # Shared Zod schemas
+│   │   ├── plugins/          # Reusable Elysia plugins
+│   │   └── utils/            # Utility functions
+│   └── types/                # Global TypeScript types
+├── tests/
+│   └── index.test.ts         # Test suite
+├── Dockerfile                # Production multi-stage build
+├── docker-compose.yml        # Production stack (app + databases)
+├── docker-compose.local.yml  # Local development (databases only)
+├── .env.example              # Environment template
+├── .dockerignore             # Docker build exclusions
+├── package.json
+├── tsconfig.json
+└── bunfig.toml
 ```
+
+### Feature Structure
+
+Each feature folder follows this pattern:
+
+- `*.controller.ts` - HTTP routing and request validation
+- `*.service.ts` - Business logic (framework-agnostic)
+- `*.model.ts` - Zod validation schemas
+
+---
 
 ## 🛠️ Code Quality
 
@@ -83,6 +246,68 @@ bun run format
 
 Pre-commit hooks automatically format staged files.
 
+### Commit Convention
+
+Commits follow [Conventional Commits](https://conventionalcommits.org):
+
+```
+type(scope): message
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+bun test
+
+# Run tests in watch mode
+bun test --watch
+```
+
+Tests use Bun's built-in test runner with `bun:test`.
+
+---
+
+## 🌐 Deployment Options
+
+### Option 1: Docker Compose (Recommended)
+
+Full stack deployment with `docker compose`:
+
+```bash
+cp .env.example .env
+# Edit .env with production values
+bun run docker:prod
+```
+
+### Option 2: Standalone Binary
+
+Build a portable binary that runs without Bun installed:
+
+```bash
+bun build --compile --minify-whitespace --minify-syntax \
+  --target bun --outfile server ./src/index.ts
+
+# Run the binary
+./server
+```
+
+### Option 3: Cloud Platforms
+
+The Dockerfile is compatible with:
+
+- ☁️ **Railway** - Auto-detects Dockerfile
+- 🪰 **Fly.io** - Use `fly launch`
+- 🌐 **Google Cloud Run** - Use `gcloud run deploy`
+- 🟠 **AWS ECS/Fargate** - Build and push to ECR
+- 🌊 **DigitalOcean App Platform** - Auto-detects Dockerfile
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -92,6 +317,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+---
 
 ## 📄 License
 
