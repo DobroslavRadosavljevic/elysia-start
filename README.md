@@ -16,7 +16,7 @@ A modern, batteries-included starter kit for building fast backend servers with 
 - ⚡ **Server Timing** - Performance metrics
 - 🛠️ **TypeScript** - Full type safety
 - 🐳 **Docker** - Production-ready containerization with PostgreSQL & Redis
-- 🔄 **CI/CD** - GitHub Actions pipelines for testing, building & releasing
+- 🔄 **CI/CD** - Optional GitHub Actions pipelines (disabled by default)
 - 🧹 **Ultracite** - Zero-config linting & formatting (Oxlint + Oxfmt)
 - 🔗 **Husky + Commitlint** - Git hooks & conventional commits
 
@@ -433,6 +433,8 @@ Environment variables are validated at startup using [t3-env](https://github.com
 | `bun run docker:clean` | Stop databases and remove volumes        |
 | `bun run docker:build` | Build production Docker image            |
 | `bun run docker:prod`  | Start full production stack              |
+| `bun run ci:enable`    | Enable GitHub Actions & Dependabot       |
+| `bun run ci:disable`   | Disable GitHub Actions & Dependabot      |
 
 ---
 
@@ -471,6 +473,9 @@ elysia-start/
 │   └── types/                # Global TypeScript types
 ├── tests/
 │   └── index.test.ts         # Test suite
+├── scripts/
+│   ├── ci-enable.ts          # Enable CI/CD workflows
+│   └── ci-disable.ts         # Disable CI/CD workflows
 ├── drizzle.config.ts         # Drizzle Kit configuration
 ├── Dockerfile                # Production multi-stage build
 ├── docker-compose.yml        # Production stack (app + databases)
@@ -518,11 +523,17 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 ---
 
-## 🔄 CI/CD Pipeline
+## 🔄 CI/CD (Optional)
 
-This project includes a complete **GitHub Actions** CI/CD pipeline.
+This starter kit includes pre-configured CI/CD pipelines that are **disabled by default**. Enable them when you're ready for automated testing, Docker builds, and releases.
 
-### Workflows
+### Enable CI/CD
+
+```bash
+bun run ci:enable
+```
+
+This enables:
 
 | Workflow       | Trigger              | Description                               |
 | -------------- | -------------------- | ----------------------------------------- |
@@ -530,72 +541,36 @@ This project includes a complete **GitHub Actions** CI/CD pipeline.
 | **Docker**     | Push to `main`, tags | Build multi-platform images, push to GHCR |
 | **Migrations** | PRs (schema changes) | Validate database migrations              |
 | **Release**    | Version tags (`v*`)  | Create GitHub releases with changelog     |
+| **Dependabot** | Weekly               | Automated dependency updates              |
 
-### CI Pipeline
-
-The CI workflow runs parallel jobs for fast feedback:
-
-```
-┌─────────┐   ┌────────────┐   ┌──────┐
-│  Lint   │   │ Typecheck  │   │ Test │
-└────┬────┘   └─────┬──────┘   └──┬───┘
-     │              │             │
-     └──────────────┼─────────────┘
-                    │
-               ┌────▼────┐
-               │  Build  │
-               └─────────┘
-```
-
-- **Lint & Format** - Runs `ultracite check`
-- **Type Check** - Runs `tsc --noEmit`
-- **Test** - Runs `bun test` with PostgreSQL & Redis service containers
-- **Build** - Validates production build (only after all checks pass)
-
-### Docker Images
-
-Images are automatically built and pushed to **GitHub Container Registry** (GHCR):
+### Disable CI/CD
 
 ```bash
-# Pull the latest image
-docker pull ghcr.io/dobroslavradosavljevic/elysia-start:latest
-
-# Or a specific version
-docker pull ghcr.io/dobroslavradosavljevic/elysia-start:1.0.0
+bun run ci:disable
 ```
 
-**Supported platforms:** `linux/amd64`, `linux/arm64`
+### Manual Enable/Disable
 
-**Tag strategy:**
-
-- `latest` - Latest build from `main` branch
-- `1.2.3` - Semantic version tags
-- `1.2`, `1` - Major/minor version tags
-- `sha-abc1234` - Commit SHA tags
-
-### Releases
-
-Create a release by pushing a version tag:
+Alternatively, rename files in `.github/` manually:
 
 ```bash
-# Create and push a version tag
-git tag v1.0.51
-git push origin v1.0.51
+# Enable a workflow
+mv .github/workflows/ci.yml.disabled .github/workflows/ci.yml
+
+# Disable a workflow
+mv .github/workflows/ci.yml .github/workflows/ci.yml.disabled
 ```
 
-This will:
+### Creating Releases
 
-1. Generate a changelog from conventional commits
-2. Create a GitHub Release
-3. Build and push Docker images with version tags
+With CI/CD enabled, create releases by pushing version tags:
 
-### Dependabot
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
-Automated dependency updates are configured for:
-
-- **npm** - Weekly updates, grouped by package family
-- **Docker** - Base image updates
-- **GitHub Actions** - Workflow action updates
+This generates a changelog and creates a GitHub Release automatically.
 
 ---
 

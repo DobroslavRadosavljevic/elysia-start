@@ -39,6 +39,8 @@ API docs available at http://localhost:3000/openapi
 | `bun run docker:down`  | Stop local databases                   |
 | `bun run docker:clean` | Stop and remove volumes                |
 | `bun run docker:prod`  | Start full production stack            |
+| `bun run ci:enable`    | Enable GitHub Actions & Dependabot     |
+| `bun run ci:disable`   | Disable GitHub Actions & Dependabot    |
 
 ---
 
@@ -70,6 +72,9 @@ elysia-start/
 │   └── types/                # Global TypeScript types
 ├── tests/
 │   └── index.test.ts         # Test suite
+├── scripts/
+│   ├── ci-enable.ts          # Enable CI/CD workflows
+│   └── ci-disable.ts         # Disable CI/CD workflows
 ├── drizzle.config.ts         # Drizzle Kit configuration
 ├── .claude/                  # AI agent configuration
 ├── .husky/                   # Git hooks
