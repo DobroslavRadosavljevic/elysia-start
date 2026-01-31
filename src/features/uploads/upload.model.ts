@@ -25,13 +25,13 @@ export const FileKeyParamSchema = z.object({
 export const PresignUploadResponseSchema = z.object({
   expiresIn: z.number(),
   key: z.string(),
-  publicUrl: z.string().nullable(),
-  uploadUrl: z.string(),
+  publicUrl: z.url().nullable(),
+  uploadUrl: z.url(),
 });
 
 // Response for presigned download URL
 export const PresignDownloadResponseSchema = z.object({
-  downloadUrl: z.string(),
+  downloadUrl: z.url(),
   expiresIn: z.number(),
   key: z.string(),
 });
@@ -39,7 +39,7 @@ export const PresignDownloadResponseSchema = z.object({
 // Response for file info
 export const FileInfoResponseSchema = z.object({
   key: z.string(),
-  publicUrl: z.string().nullable(),
+  publicUrl: z.url().nullable(),
   size: z.number(),
   type: z.string(),
 });

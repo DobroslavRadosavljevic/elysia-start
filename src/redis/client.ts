@@ -8,13 +8,8 @@ export const redis = new Redis(env.REDIS_URL, {
   retryStrategy: (times) => Math.min(times * 50, 2000),
 });
 
-redis.on("connect", () => {
-  console.log("Redis connected");
-});
-
-redis.on("error", (err) => {
-  console.error("Redis error:", err.message);
-});
+// Event handlers intentionally removed to avoid console.log in production
+// If logging is needed, use a proper logging library and inject it here
 
 export const closeRedis = async () => {
   await redis.quit();

@@ -2,7 +2,7 @@ import { exampleQueue } from "./example.queue";
 
 export {
   exampleQueue,
-  ExampleJobData,
+  ExampleJobDataSchema,
   type ExampleJobDataType,
 } from "./example.queue";
 

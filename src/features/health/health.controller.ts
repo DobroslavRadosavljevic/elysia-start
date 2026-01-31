@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 
-import { HealthResponse } from "./health.model";
+import { HealthResponseSchema } from "./health.model";
 import { HealthService } from "./health.service";
 
 export const healthController = new Elysia({ prefix: "/health" }).get(
@@ -12,6 +12,6 @@ export const healthController = new Elysia({ prefix: "/health" }).get(
       summary: "Health check",
       tags: ["Health"],
     },
-    response: HealthResponse,
+    response: HealthResponseSchema,
   }
 );

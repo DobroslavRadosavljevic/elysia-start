@@ -29,7 +29,10 @@ export const sessions = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
   },
-  (table) => [index("sessions_userId_idx").on(table.userId)]
+  (table) => [
+    index("sessions_userId_idx").on(table.userId),
+    index("sessions_expiresAt_idx").on(table.expiresAt),
+  ]
 );
 
 export const accounts = pgTable(
@@ -53,7 +56,13 @@ export const accounts = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
   },
-  (table) => [index("accounts_userId_idx").on(table.userId)]
+  (table) => [
+    index("accounts_userId_idx").on(table.userId),
+    index("accounts_providerId_accountId_idx").on(
+      table.providerId,
+      table.accountId
+    ),
+  ]
 );
 
 export const verifications = pgTable(
