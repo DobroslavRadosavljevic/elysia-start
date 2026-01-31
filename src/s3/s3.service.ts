@@ -4,21 +4,73 @@ import type {
   UploadOptionsType,
 } from "./s3.model";
 
+import { AppError } from "../shared/errors";
 import { s3, s3Config } from "./client";
 
+// Allowed MIME types for file uploads
+const ALLOWED_MIME_TYPES = new Set([
+  // Images
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+  // Documents
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  // Text
+  "text/plain",
+  "text/csv",
+  // Archives
+  "application/zip",
+  "application/gzip",
+  // JSON
+  "application/json",
+]);
+
 export class S3Service {
+  /**
+   * Sanitize S3 key to prevent path traversal attacks
+   */
+  private sanitizeKey(key: string) {
+    // Reject path traversal patterns
+    if (key.includes("..") || key.startsWith("/") || key.includes("//")) {
+      throw new AppError("Invalid file key", 400, "INVALID_FILE_KEY");
+    }
+    // Remove any null bytes
+    return key.replaceAll("\0", "");
+  }
+
+  /**
+   * Validate content type against allowlist
+   */
+  validateContentType(contentType: string) {
+    if (!ALLOWED_MIME_TYPES.has(contentType)) {
+      throw new AppError(
+        `File type '${contentType}' is not allowed`,
+        400,
+        "INVALID_FILE_TYPE"
+      );
+    }
+    return true;
+  }
   /**
    * Get a lazy reference to an S3 file (doesn't fetch until accessed)
    */
   file(key: string) {
-    return s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    return s3.file(sanitizedKey);
   }
 
   /**
    * Check if a file exists in the bucket
    */
   exists(key: string) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     return file.exists();
   }
 
@@ -26,7 +78,8 @@ export class S3Service {
    * Get file size in bytes (returns undefined if file doesn't exist)
    */
   async size(key: string) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     if (!(await file.exists())) {
       return;
     }
@@ -37,12 +90,13 @@ export class S3Service {
    * Get file metadata
    */
   async getInfo(key: string) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     if (!(await file.exists())) {
       return null;
     }
     return {
-      key,
+      key: sanitizedKey,
       size: file.size,
       type: file.type,
     };
@@ -52,7 +106,8 @@ export class S3Service {
    * Read file as text
    */
   async getText(key: string) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     if (!(await file.exists())) {
       return null;
     }
@@ -63,7 +118,8 @@ export class S3Service {
    * Read file as JSON
    */
   async getJson<T>(key: string) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     if (!(await file.exists())) {
       return null;
     }
@@ -74,7 +130,8 @@ export class S3Service {
    * Read file as ArrayBuffer
    */
   async getArrayBuffer(key: string) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     if (!(await file.exists())) {
       return null;
     }
@@ -85,7 +142,8 @@ export class S3Service {
    * Read file as ReadableStream
    */
   async getStream(key: string) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     if (!(await file.exists())) {
       return null;
     }
@@ -96,7 +154,8 @@ export class S3Service {
    * Read file as Blob
    */
   async getBlob(key: string) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     if (!(await file.exists())) {
       return null;
     }
@@ -113,11 +172,12 @@ export class S3Service {
     data: string | ArrayBuffer | Blob | File,
     options?: UploadOptionsType
   ) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     const written = await file.write(data, {
       type: options?.contentType,
     });
-    return { key, size: written };
+    return { key: sanitizedKey, size: written };
   }
 
   /**
@@ -133,7 +193,8 @@ export class S3Service {
       retry?: number; // Retry count on failure
     }
   ) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     return file.writer({
       partSize: options?.partSize,
       queueSize: options?.queueSize,
@@ -146,7 +207,8 @@ export class S3Service {
    * Delete a file from S3
    */
   async delete(key: string) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     if (!(await file.exists())) {
       return false;
     }
@@ -183,7 +245,8 @@ export class S3Service {
    * Generate a presigned URL for download
    */
   presignDownload(key: string, options?: PresignOptionsType) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     return file.presign({
       contentDisposition: options?.contentDisposition,
       expiresIn: options?.expiresIn ?? 3600, // Default 1 hour
@@ -195,7 +258,8 @@ export class S3Service {
    * Generate a presigned URL for upload (PUT)
    */
   presignUpload(key: string, options?: PresignUploadOptionsType) {
-    const file = s3.file(key);
+    const sanitizedKey = this.sanitizeKey(key);
+    const file = s3.file(sanitizedKey);
     return file.presign({
       acl: options?.acl,
       expiresIn: options?.expiresIn ?? 3600, // Default 1 hour
@@ -207,12 +271,14 @@ export class S3Service {
    * Copy file within the bucket
    */
   async copy(sourceKey: string, destinationKey: string) {
-    const sourceFile = s3.file(sourceKey);
+    const sanitizedSourceKey = this.sanitizeKey(sourceKey);
+    const sanitizedDestKey = this.sanitizeKey(destinationKey);
+    const sourceFile = s3.file(sanitizedSourceKey);
     if (!(await sourceFile.exists())) {
       return false;
     }
     const data = await sourceFile.arrayBuffer();
-    await this.upload(destinationKey, data);
+    await this.upload(sanitizedDestKey, data);
     return true;
   }
 
@@ -220,11 +286,13 @@ export class S3Service {
    * Move file within the bucket (copy + delete)
    */
   async move(sourceKey: string, destinationKey: string) {
-    const copied = await this.copy(sourceKey, destinationKey);
+    const sanitizedSourceKey = this.sanitizeKey(sourceKey);
+    const sanitizedDestKey = this.sanitizeKey(destinationKey);
+    const copied = await this.copy(sanitizedSourceKey, sanitizedDestKey);
     if (!copied) {
       return false;
     }
-    await this.delete(sourceKey);
+    await this.delete(sanitizedSourceKey);
     return true;
   }
 
@@ -232,10 +300,21 @@ export class S3Service {
    * Get public URL for a file (if bucket is public or CDN configured)
    */
   getPublicUrl(key: string) {
+    const sanitizedKey = this.sanitizeKey(key);
     if (!s3Config.publicUrl) {
       return null;
     }
-    return `${s3Config.publicUrl}/${key}`;
+    return `${s3Config.publicUrl}/${sanitizedKey}`;
+  }
+
+  /**
+   * Sanitize a path segment (prefix or extension) to prevent path traversal
+   */
+  private sanitizeSegment(segment: string) {
+    // Remove path traversal patterns and dangerous characters
+    // First remove null bytes, then remove other dangerous patterns
+    const withoutNulls = segment.replaceAll("\0", "");
+    return withoutNulls.replaceAll(/\.{2,}|[/\\:]/g, "");
   }
 
   /**
@@ -251,9 +330,17 @@ export class S3Service {
     const name = options?.filename
       ? options.filename.replaceAll(/[^a-zA-Z0-9.-]/g, "_")
       : `${timestamp}-${random}`;
-    const ext = options?.extension ? `.${options.extension}` : "";
-    const prefix = options?.prefix ? `${options.prefix}/` : "";
-    return `${prefix}${name}${ext}`;
+    const sanitizedExt = options?.extension
+      ? this.sanitizeSegment(options.extension)
+      : "";
+    const sanitizedPrefix = options?.prefix
+      ? this.sanitizeSegment(options.prefix)
+      : "";
+    const ext = sanitizedExt ? `.${sanitizedExt}` : "";
+    const prefix = sanitizedPrefix ? `${sanitizedPrefix}/` : "";
+    const generatedKey = `${prefix}${name}${ext}`;
+    // Final validation of the complete key
+    return this.sanitizeKey(generatedKey);
   }
 }
 

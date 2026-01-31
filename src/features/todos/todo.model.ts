@@ -19,6 +19,7 @@ export const TodoResponseSchema = z.object({
   id: z.uuid(),
   title: z.string(),
   updatedAt: z.iso.datetime(),
+  userId: z.string(),
 });
 
 export const TodoListResponseSchema = z.array(TodoResponseSchema);

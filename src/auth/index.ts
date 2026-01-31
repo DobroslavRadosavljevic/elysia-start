@@ -19,17 +19,30 @@ export const auth = betterAuth({
   plugins: [openAPI()],
   secondaryStorage: {
     delete: async (key) => {
-      await redis.del(key);
+      try {
+        await redis.del(key);
+      } catch (error) {
+        console.error("Redis delete error:", error);
+      }
     },
     get: async (key) => {
-      const value = await redis.get(key);
-      return value ?? null;
+      try {
+        const value = await redis.get(key);
+        return value ?? null;
+      } catch (error) {
+        console.error("Redis get error:", error);
+        return null;
+      }
     },
     set: async (key, value, ttl) => {
-      if (ttl) {
-        await redis.set(key, value, "EX", ttl);
-      } else {
-        await redis.set(key, value);
+      try {
+        if (ttl) {
+          await redis.set(key, value, "EX", ttl);
+        } else {
+          await redis.set(key, value);
+        }
+      } catch (error) {
+        console.error("Redis set error:", error);
       }
     },
   },

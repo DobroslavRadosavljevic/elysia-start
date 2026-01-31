@@ -21,7 +21,7 @@ export const SendEmailOptionsSchema = z.object({
   attachments: z.array(EmailAttachmentSchema).optional(),
   bcc: EmailRecipientSchema.optional(),
   cc: EmailRecipientSchema.optional(),
-  from: z.string().optional(),
+  from: z.email().optional(),
   headers: z.record(z.string(), z.string()).optional(),
   html: z.string().optional(),
   replyTo: z.email().optional(),

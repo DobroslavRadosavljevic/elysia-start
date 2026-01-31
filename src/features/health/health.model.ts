@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-export const HealthResponse = z.object({
+export const HealthResponseSchema = z.object({
   status: z.literal("ok"),
   timestamp: z.string(),
 });
 
-export type HealthResponseType = z.infer<typeof HealthResponse>;
+export type HealthResponseType = z.infer<typeof HealthResponseSchema>;

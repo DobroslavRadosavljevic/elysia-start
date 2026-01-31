@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { timingSafeEqual } from "node:crypto";
 
 import { env } from "../../config";
 import { serverAdapter } from "../../queues/board";
@@ -25,10 +26,21 @@ export const bullBoardPlugin = new Elysia({ name: "plugin.bull-board" })
       const credentials = atob(authHeader.slice(6));
       const [username, password] = credentials.split(":");
 
-      if (
-        username !== env.BULL_BOARD_USERNAME ||
-        password !== env.BULL_BOARD_PASSWORD
-      ) {
+      // Use timing-safe comparison to prevent timing attacks
+      const usernameValid =
+        username.length === env.BULL_BOARD_USERNAME.length &&
+        timingSafeEqual(
+          Buffer.from(username),
+          Buffer.from(env.BULL_BOARD_USERNAME)
+        );
+      const passwordValid =
+        password.length === env.BULL_BOARD_PASSWORD.length &&
+        timingSafeEqual(
+          Buffer.from(password),
+          Buffer.from(env.BULL_BOARD_PASSWORD)
+        );
+
+      if (!usernameValid || !passwordValid) {
         set.status = 401;
         set.headers["WWW-Authenticate"] = 'Basic realm="Bull Board"';
         return "Invalid credentials";

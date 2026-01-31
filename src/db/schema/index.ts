@@ -1,7 +1,7 @@
 export { accounts, sessions, users, verifications } from "./auth.schema";
 export {
-  TodoInsert,
-  TodoSelect,
+  TodoInsertSchema,
+  TodoSelectSchema,
   todos,
   type TodoInsertType,
   type TodoSelectType,

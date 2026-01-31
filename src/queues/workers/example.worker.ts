@@ -1,20 +1,22 @@
 import { type Job, Worker } from "bullmq";
 
-import type { ExampleJobDataType } from "../queues/example.queue";
-
 import { createBullMQConnection } from "../connection";
+import {
+  ExampleJobDataSchema,
+  type ExampleJobDataType,
+} from "../queues/example.queue";
 
 const processExampleJob = async (job: Job<ExampleJobDataType>) => {
-  const { message } = job.data;
+  // Validate job data at runtime
+  const data = ExampleJobDataSchema.parse(job.data);
 
   await job.updateProgress(10);
 
   // Process the job (replace with actual logic)
-  console.log(`Processing job ${job.id}: ${message}`);
-
+  // Access validated data: data.message
   await job.updateProgress(100);
 
-  return { processed: true, timestamp: Date.now() };
+  return { message: data.message, processed: true, timestamp: Date.now() };
 };
 
 // Create worker with its own connection (required by BullMQ)
@@ -27,15 +29,5 @@ export const exampleWorker = new Worker<ExampleJobDataType>(
   }
 );
 
-// Event handlers
-exampleWorker.on("completed", (job, result) => {
-  console.log(`Job ${job.id} completed:`, result);
-});
-
-exampleWorker.on("failed", (job, error) => {
-  console.error(`Job ${job?.id} failed:`, error.message);
-});
-
-exampleWorker.on("error", (error) => {
-  console.error("Example worker error:", error);
-});
+// Event handlers intentionally removed to avoid console.log in production
+// If logging is needed, use a proper logging library and inject it here

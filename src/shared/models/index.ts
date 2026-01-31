@@ -1,8 +1,8 @@
 export {
-  ErrorResponse,
-  IdParam,
-  PaginatedResponse,
-  Pagination,
+  ErrorResponseSchema,
+  IdParamSchema,
+  PaginatedResponseSchema,
+  PaginationSchema,
 } from "./common.model";
 export type {
   ErrorResponseType,
