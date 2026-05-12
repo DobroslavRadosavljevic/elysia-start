@@ -40,7 +40,7 @@ export const MultipartOptionsSchema = z.object({
 export const UploadResponseSchema = z.object({
   key: z.string(),
   size: z.number(),
-  url: z.string().optional(),
+  url: z.url().optional(),
 });
 
 // Response for presigned URL
@@ -48,7 +48,7 @@ export const PresignedUrlResponseSchema = z.object({
   expiresIn: z.number(),
   key: z.string(),
   method: z.enum(["GET", "PUT"]),
-  url: z.string(),
+  url: z.url(),
 });
 
 // Bulk delete response

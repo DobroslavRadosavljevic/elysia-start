@@ -80,6 +80,9 @@ export const UploadService = {
    * Direct upload from multipart form data
    */
   async uploadFile(file: File, prefix?: string) {
+    // Validate file type before uploading
+    s3Service.validateContentType(file.type);
+
     const key = s3Service.generateKey({
       extension: file.name.split(".").pop(),
       filename: file.name,

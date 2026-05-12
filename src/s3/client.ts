@@ -26,10 +26,8 @@ export const verifyS3Connection = async () => {
   try {
     const testFile = s3.file(".s3-connection-test");
     await testFile.exists();
-    console.log("S3 connected");
     return true;
-  } catch (error) {
-    console.error("S3 connection error:", (error as Error).message);
+  } catch {
     return false;
   }
 };

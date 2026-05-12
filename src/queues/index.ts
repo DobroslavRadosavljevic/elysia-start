@@ -9,7 +9,7 @@ export {
 export {
   allQueues,
   exampleQueue,
-  ExampleJobData,
+  ExampleJobDataSchema,
   type ExampleJobDataType,
 } from "./queues";
 

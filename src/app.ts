@@ -7,10 +7,10 @@ import { Elysia } from "elysia";
 import { z } from "zod";
 
 import { authOpenAPI } from "./auth";
+import { env } from "./config";
 import { healthController } from "./features/health/health.controller";
 import { todoController } from "./features/todos/todo.controller";
 import { uploadController } from "./features/uploads/upload.controller";
-import { exampleQueue } from "./queues";
 import {
   authPlugin,
   bullBoardPlugin,
@@ -25,7 +25,7 @@ export const app = new Elysia({
     maxRequestBodySize: 1024 * 1024 * 128,
   },
 })
-  .use(cors())
+  .use(cors({ origin: env.CORS_ORIGINS?.split(",") ?? true }))
   .use(dbPlugin)
   .use(redisPlugin)
   .use(s3Plugin)
@@ -36,7 +36,7 @@ export const app = new Elysia({
       name: "heartbeat",
       pattern: "*/30 * * * * *",
       run() {
-        console.log("Heartbeat");
+        // No-op heartbeat for keep-alive
       },
     })
   )
@@ -58,13 +58,6 @@ export const app = new Elysia({
   .use(opentelemetry())
   .use(serverTiming())
   .get("/", () => "Hello Elysia")
-  // Test endpoint to add a job to the example queue
-  .get("/add-job", async ({ query }) => {
-    const job = await exampleQueue.add("process", {
-      message: query.message ?? "Hello from queue!",
-    });
-    return { jobId: job.id, status: "queued" };
-  })
   .use(healthController)
   .use(todoController)
   .use(uploadController);

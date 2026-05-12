@@ -2,8 +2,8 @@ export { closeDb, db } from "./client";
 export {
   accounts,
   sessions,
-  TodoInsert,
-  TodoSelect,
+  TodoInsertSchema,
+  TodoSelectSchema,
   todos,
   type TodoInsertType,
   type TodoSelectType,

@@ -10,7 +10,7 @@ export const authPlugin = new Elysia({ name: "plugin.auth" })
         const session = await auth.api.getSession({ headers });
 
         if (!session) {
-          return status(401);
+          return status(401, { message: "Unauthorized" });
         }
 
         return {
